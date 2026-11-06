@@ -5,7 +5,7 @@ import type { APIRoute } from 'astro';
    que se olvide al cambiar de hosting. */
 
 export const GET: APIRoute = ({ site }) => {
-  const base = site ?? new URL('https://midominio.com');
+  const base = site ?? new URL('https://orthodent.hn');
   const sitemap = new URL('sitemap-index.xml', base).href;
 
   const cuerpo = ['User-agent: *', 'Allow: /', '', `Sitemap: ${sitemap}`, ''].join('\n');

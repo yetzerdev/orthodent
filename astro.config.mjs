@@ -5,8 +5,8 @@ import sitemap from '@astrojs/sitemap';
 // https://astro.build/config
 export default defineConfig({
   // Dominio raiz. Necesario para que el sitemap y las URL canonicas
-  // se generen como URLs absolutas (https://midominio.com/...)
-  site: 'https://midominio.com',
+  // se generen como URLs absolutas (https://orthodent.hn/...)
+  site: 'https://orthodent.hn',
 
   // Sin JavaScript en cliente: Astro no lo envia salvo que se use client:*
   build: {

@@ -34,7 +34,7 @@ const {
 /* La URL canonica ya trae el prefijo /en cuando corresponde, asi que se
    derivan las dos versiones alternas desde ella en lugar de desde
    Astro.url.pathname, que no distingue el idioma. */
-const siteUrl = Astro.site ?? new URL('https://midominio.com');
+const siteUrl = Astro.site ?? new URL('https://orthodent.hn');
 const canonicalUrl = canonical ?? new URL(Astro.url.pathname, siteUrl).href;
 const ogImageUrl = new URL(ogImage, siteUrl).href;
 
