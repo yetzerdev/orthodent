@@ -1,0 +1,114 @@
+---
+import Comparador from './Comparador.astro';
+
+import caso1Antes from '../assets/images/casos/1/antes.png';
+import caso1Despues from '../assets/images/casos/1/despues.png';
+import caso2Antes from '../assets/images/casos/2/antes.png';
+import caso2Despues from '../assets/images/casos/2/despues.png';
+import caso3Antes from '../assets/images/casos/3/antes.png';
+import caso3Despues from '../assets/images/casos/3/despues.png';
+import caso4Antes from '../assets/images/casos/4/antes.png';
+import caso4Despues from '../assets/images/casos/4/despues.png';
+import caso5Antes from '../assets/images/casos/5/antes.png';
+import caso5Despues from '../assets/images/casos/5/despues.png';
+import caso6Antes from '../assets/images/casos/6/antes.png';
+import caso6Despues from '../assets/images/casos/6/despues.png';
+
+import { textos } from '../i18n';
+
+interface Props {
+  casos: { titulo: string; antesAlt: string; despuesAlt: string }[];
+}
+
+const { casos: textosCasos } = Astro.props;
+
+const lang = Astro.currentLocale ?? 'es';
+const t = textos(lang);
+
+/* El orden de los casos es fijo porque cada par de imagenes pertenece a un
+   tratamiento distinto. Los textos entran por props ya traducidos. */
+const imagenes = [
+  { antes: caso1Antes, despues: caso1Despues },
+  { antes: caso2Antes, despues: caso2Despues },
+  { antes: caso3Antes, despues: caso3Despues },
+  { antes: caso4Antes, despues: caso4Despues },
+  { antes: caso5Antes, despues: caso5Despues },
+  { antes: caso6Antes, despues: caso6Despues },
+];
+
+const casos = textosCasos.map((c, i) => ({ ...c, ...imagenes[i] }));
+---
+
+<section class="section shell casos" id="casos-clinicos" aria-labelledby="casos-titulo">
+  <div class="casos__cabecera" data-reveal-group>
+    <div class="casos__titulos">
+      <span class="casos__kicker">{t.casos.kicker}</span>
+      <h2 id="casos-titulo">{t.casos.titulo}</h2>
+    </div>
+    <p class="casos__bajada">
+      {t.casos.bajada}
+    </p>
+  </div>
+
+  <div class="casos__rejilla" data-reveal-group>
+    {casos.map((caso) => <Comparador {...caso} />)}
+  </div>
+</section>
+
+<style>
+  .casos__cabecera {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .casos__kicker {
+    display: block;
+    margin-bottom: 0.375rem;
+    color: var(--brand);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .casos__titulos h2 {
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .casos__bajada {
+    max-width: 32rem;
+    color: var(--slate-600);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+  }
+
+  .casos__rejilla {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  @media (min-width: 48rem) {
+    .casos__cabecera {
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 3rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .casos__rejilla {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 64rem) {
+    /* Tres columnas como en la referencia. Dos dejaria el tercer caso
+       huerfano en su propia fila. Con 6 casos quedan dos filas exactas. */
+    .casos__rejilla {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>

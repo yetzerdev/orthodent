@@ -1,0 +1,441 @@
+---
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import whatsappIcon from '../assets/whatsapp-svgrepo-com.svg?raw';
+import logo from '../assets/images/logo-orthodent.png';
+import { textos, rutaAlterna, etiquetaIdioma } from '../i18n';
+import { datosAcreditaciones } from '../i18n/listados';
+
+const lang = Astro.currentLocale ?? 'es';
+const t = textos(lang);
+const otro = lang === 'en' ? 'es' : 'en';
+
+const whatsappSvg = whatsappIcon
+  .slice(whatsappIcon.indexOf('<svg'))
+  .replace(/<title>.*?<\/title>/s, '')
+  .replace('fill="#000000"', 'fill="currentColor"');
+
+const anio = new Date().getFullYear();
+
+/* Misma proporcion real que en la cabecera: el logotipo es apaisado
+   (1685x797) y con dimensiones cuadradas Astro lo recorta. */
+const LOGO_ALTO = 226;
+const LOGO_ANCHO = Math.round((logo.width / logo.height) * LOGO_ALTO);
+
+const sede = {
+  titulo: t.sedes.tituloSede,
+  calle: t.sedes.calle,
+  enlace: 'https://maps.app.goo.gl/xhfUQVQTHY6B7ifc6',
+  telefono: '+50496405308',
+  telefonoHref: '+50496405308',
+  whatsapp: '50496405308',
+};
+
+const acreditaciones = datosAcreditaciones(lang);
+
+const legales = [
+  {
+    label: lang === 'en' ? 'Privacy' : 'Privacidad',
+    href: lang === 'en' ? '/en/privacy' : '/privacidad',
+  },
+  {
+    label: lang === 'en' ? 'Terms' : 'Términos',
+    href: lang === 'en' ? '/en/terms' : '/terminos-y-condiciones',
+  },
+];
+---
+
+<footer class="pie">
+  <div class="shell">
+    <div class="pie__mapa" data-reveal-group>
+      <div class="pie__marca">
+        <Image
+          class="pie__logo"
+          src={logo}
+          alt="Orthodent"
+          width={LOGO_ANCHO}
+          height={LOGO_ALTO}
+          loading="lazy"
+          decoding="async"
+        />
+        <p class="pie__lema">
+          {t.footer.lema}
+        </p>
+      </div>
+
+      <section class="pie__bloque">
+        <h2 class="pie__titulo">{t.footer.sede}</h2>
+        <a class="pie__sede" href={sede.enlace} target="_blank" rel="noopener noreferrer">
+          <Icon name="location-01" size={18} />
+          <span>{sede.titulo}</span>
+        </a>
+        <p class="pie__nota">{sede.calle}</p>
+      </section>
+
+      <section class="pie__bloque">
+        <h2 class="pie__titulo">{t.footer.contacto}</h2>
+        <a class="pie__contacto" href={`tel:${sede.telefonoHref}`}>
+          <Icon name="call" size={18} />
+          <span>{sede.telefono}</span>
+        </a>
+        <a
+          class="pie__contacto"
+          href={`https://wa.me/${sede.whatsapp}?text=${encodeURIComponent(t.agendar.waSaludo)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="pie__icono-wa" set:html={whatsappSvg} />
+          <span>WhatsApp</span>
+        </a>
+        </section>
+
+      <section class="pie__bloque">
+        <h2 class="pie__titulo">{t.footer.acreditaciones}</h2>
+        <ul class="pie__acreditaciones">
+          {
+            acreditaciones.map((a) => (
+              <li>
+                <Icon name="shield-check" size={18} />
+                <span>{a}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+    </div>
+
+    <div class="pie__legal" data-reveal>
+      <p>{t.footer.legal.replace('{anio}', String(anio))}</p>
+
+      <ul class="pie__enlaces">
+        {
+          legales.map((l) => (
+            <li>
+              <a href={l.href}>{l.label}</a>
+            </li>
+          ))
+        }
+        <li>
+          <a
+            class="pie__enlace-idioma"
+            href={rutaAlterna(Astro.url.pathname, otro)}
+            hreflang={otro}
+            aria-label={otro === 'en' ? 'Switch to English' : 'Cambiar a español'}
+          >
+            {etiquetaIdioma[otro]}
+          </a>
+        </li>
+      </ul>
+
+      <p class="pie__credito">
+        <span>{t.footer.credito}</span>
+        <a
+          class="pie__credito-link"
+          href="https://spacecreative.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Space Creative</a>
+        <Icon name="heart" size={14} />
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .pie {
+    margin-top: var(--section-y);
+    padding-block: 3rem 2rem;
+    border-top: 1px solid var(--slate-200);
+    background: #fff;
+  }
+
+  /* Cuatro columnas de ancho fijo. La marca ocupa dos para que el logotipo
+     tenga aire y no compita con los bloques de texto. */
+  .pie__mapa {
+    display: grid;
+    gap: 2.5rem 2rem;
+  }
+
+  .pie__logo {
+    width: auto;
+    height: 3rem;
+  }
+
+  .pie__lema {
+    margin-top: 1rem;
+    color: var(--slate-600);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    max-width: 40ch;
+  }
+
+  .pie__titulo {
+    margin-bottom: 1rem;
+    color: var(--ink);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .pie__sede {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    color: var(--ink);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .pie__sede :global(svg) {
+    color: var(--brand);
+    flex: none;
+  }
+
+  .pie__sede:hover {
+    color: var(--brand-strong);
+  }
+
+  .pie__nota {
+    margin-top: 0.375rem;
+    color: var(--slate-600);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    max-width: 34ch;
+  }
+
+  .pie__contacto {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ink);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .pie__contacto + .pie__contacto {
+    margin-top: 0.625rem;
+  }
+
+  .pie__contacto :global(svg),
+  .pie__icono-wa {
+    flex: none;
+    color: var(--brand);
+  }
+
+  .pie__contacto:hover {
+    color: var(--brand-strong);
+  }
+
+  .pie__icono-wa {
+    display: grid;
+    place-items: center;
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .pie__icono-wa :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .pie__acreditaciones {
+    display: grid;
+    gap: 0.625rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pie__acreditaciones li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: var(--slate-600);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+  }
+
+  .pie__acreditaciones :global(svg) {
+    flex: none;
+    margin-top: 1px;
+    color: var(--brand);
+  }
+
+  /* Copyright, enlaces legales, selector de idioma y credito: cuatro elementos
+     en una sola fila que envuelve sola cuando el ancho no alcanza. */
+  .pie__legal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--slate-100);
+    color: var(--slate-500);
+    font-size: 0.8125rem;
+  }
+
+  .pie__legal > p {
+    margin: 0;
+  }
+
+  .pie__enlaces {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pie__enlaces a {
+    color: var(--slate-600);
+    text-decoration: none;
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .pie__enlaces a:hover {
+    color: var(--brand-strong);
+    text-decoration: underline;
+  }
+
+  /* El selector de idioma se separa del resto de enlaces para que se lea como
+     control y no como un termino mas de la lista. */
+  .pie__enlace-idioma {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--r-full);
+    font-weight: 600;
+    color: var(--ink) !important;
+  }
+
+  .pie__enlace-idioma:hover {
+    border-color: var(--brand);
+    text-decoration: none !important;
+  }
+
+  .pie__enlace-idioma::before {
+    content: '🌐';
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+
+  .pie__credito {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: 0;
+  }
+
+  .pie__credito-link {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .pie__credito-link:hover {
+    color: var(--brand-strong);
+  }
+
+  .pie__credito :global(svg) {
+    color: var(--brand);
+  }
+
+  /* Movil: dos columnas para que el footer no sea un bloque endless. La marca
+     ocupa el ancho completo arriba y los tres bloques de datos van en 2x2. */
+  @media (max-width: 39.999rem) {
+    .pie {
+      padding-block: 2rem 1.5rem;
+    }
+
+    .pie__mapa {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.75rem 1.25rem;
+    }
+
+    .pie__marca {
+      grid-column: 1 / -1;
+    }
+
+    .pie__logo {
+      height: 2.25rem;
+    }
+
+    .pie__lema {
+      margin-top: 0.625rem;
+      font-size: 0.8125rem;
+      line-height: 1.6;
+    }
+
+    /* Sede ocupa toda la fila: con el horario quitado ya no hay tabla que se
+       parta, pero la direccion larga necesita el ancho completo. */
+    .pie__bloque:first-of-type {
+      grid-column: 1 / -1;
+    }
+
+    .pie__titulo {
+      margin-bottom: 0.625rem;
+      font-size: 0.6875rem;
+    }
+
+    .pie__nota {
+      font-size: 0.75rem;
+    }
+
+    .pie__horarios {
+      margin-top: 0.625rem;
+    }
+
+    .pie__contacto,
+    .pie__sede {
+      font-size: 0.8125rem;
+    }
+
+    .pie__acreditaciones {
+      gap: 0.5rem;
+    }
+
+    .pie__acreditaciones li {
+      font-size: 0.75rem;
+    }
+
+    /* Movil: el copyright arriba a ancho completo y los enlaces en una fila
+       aparte, para que no queden colgando al lado del texto largo. */
+    .pie__legal {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-top: 1.75rem;
+      padding-top: 1.25rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  @media (min-width: 40rem) {
+    .pie__mapa {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .pie__mapa {
+      grid-template-columns: 1.6fr 1.2fr 0.9fr 1.1fr;
+      gap: 2.5rem 3rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pie__contacto,
+    .pie__credito-link {
+      transition: none;
+    }
+  }
+</style>

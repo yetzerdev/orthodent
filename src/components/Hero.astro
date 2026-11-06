@@ -1,0 +1,488 @@
+---
+import { Picture } from 'astro:assets';
+import Icon from './Icon.astro';
+import bannerEscritorio from '../assets/images/hero-banner.png';
+import bannerMovil from '../assets/images/hero-mobil.png';
+
+interface Props {
+  titulo: string;
+  bajada: string;
+  destacado?: { texto: string; etiqueta: string };
+  ctas?: { label: string; corto?: string; href: string; variant: 'solid' | 'ghost'; icon?: string }[];
+}
+
+const {
+  titulo,
+  bajada,
+  destacado,
+  ctas = [],
+} = Astro.props;
+---
+
+<section class="section shell hero" id="inicio" aria-labelledby="hero-titulo">
+  <div class="hero__card">
+    <div class="hero__panel">
+      <div class="hero__slot hero__slot--movil">
+        <Picture
+          src={bannerMovil}
+          alt=""
+          aria-hidden="true"
+          formats={['avif', 'webp']}
+          fallbackFormat="jpg"
+          widths={[480, 720, 941]}
+          sizes="94vw"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+          class="hero__fondo"
+        />
+      </div>
+
+      <div class="hero__slot hero__slot--escritorio">
+        <Picture
+          src={bannerEscritorio}
+          alt=""
+          aria-hidden="true"
+          formats={['avif', 'webp']}
+          fallbackFormat="jpg"
+          widths={[640, 1100, 1600, 1768]}
+          sizes="(min-width: 100rem) 97rem, 94vw"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+          class="hero__fondo"
+        />
+      </div>
+
+      <div class="hero__contenido">
+        <h1 id="hero-titulo" class="hero__titulo">{titulo}</h1>
+        <p class="hero__bajada">{bajada}</p>
+
+        {
+          ctas.length > 0 && (
+            <div class="hero__acciones">
+              {ctas.map((cta) => (
+                <a
+                  class:list={[
+                    'pill',
+                    'hero__cta',
+                    cta.variant === 'solid' ? 'hero__cta--solid' : 'hero__cta--ghost',
+                  ]}
+                  href={cta.href}
+                >
+                  {cta.icon && <Icon name={cta.icon} size={15} />}
+                  <span class="hero__cta-label">{cta.label}</span>
+                  <span class="hero__cta-alt" aria-hidden="true">{cta.corto ?? cta.label}</span>
+                </a>
+              ))}
+            </div>
+          )
+        }
+      </div>
+    </div>
+
+    {
+      destacado && (
+        <div class="hero__pie">
+          <div class="hero__nota">
+            <p>{destacado.texto}</p>
+            <span class="hero__sello">
+              <Icon name="star" size={13} />
+              {destacado.etiqueta}
+            </span>
+          </div>
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding-block: 0.5rem var(--section-y);
+  }
+
+  /* En escritorio el panel no es una caja: se deshace y deja que la tarjeta
+     pinte el fondo. Asi el bloque de confianza puede salir de la tarjeta
+     en vertical sin duplicar la imagen. */
+  .hero__card {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    /* En escritorio el panel ocupa todo el alto disponible bajo el header
+       sticky, para que la seccion de especialidades no asome en el primer
+       pantallazo. El max() conserva el piso anterior en pantallas bajas. */
+    min-height: max(clamp(26rem, 64svh, 36rem), calc(100svh - var(--header-h) - 0.5rem));
+    padding: clamp(1.5rem, 3.5vw, 2.5rem);
+    border-radius: var(--r-media);
+    overflow: hidden;
+    background-color: var(--primary-deep);
+    background-image: linear-gradient(
+      320deg,
+      var(--primary-deep) 0%,
+      var(--primary) 42%,
+      var(--brand) 100%
+    );
+    box-shadow: var(--shadow-lg);
+  }
+
+  .hero__panel {
+    display: contents;
+  }
+
+  /* El envoltorio se saca del flujo para no sumar un gap vacio */
+  .hero__slot {
+    display: contents;
+  }
+
+  .hero__slot--movil {
+    display: none;
+  }
+
+  picture {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    display: block;
+  }
+
+  .hero__fondo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* Velo de marca: el gradiente tinte la imagen y sostiene el contraste AA
+     del texto sin importar que haya en el banner. */
+  .hero__card::after,
+  .hero__panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(180deg, oklch(1 0 0 / 0.1), oklch(1 0 0 / 0) 34%),
+      linear-gradient(
+        100deg,
+        oklch(0.25 0.11 275 / 0.78) 0%,
+        oklch(0.25 0.11 275 / 0.55) 44%,
+        oklch(0.25 0.11 275 / 0.42) 100%
+      );
+  }
+
+  .hero__contenido {
+    position: relative;
+    max-width: 46rem;
+    margin-block: auto;
+  }
+
+  /* El panel de escritorio ya ocupa toda la pantalla, asi que el bloque de
+     texto puede subir de escala respecto al h1 global. */
+  .hero__titulo {
+    color: #fff;
+    font-size: clamp(2.75rem, 1.6rem + 4.2vw, 4.5rem);
+    line-height: 1.06;
+    text-wrap: balance;
+  }
+
+  .hero__bajada {
+    max-width: 34rem;
+    margin-top: 1.25rem;
+    color: oklch(0.965 0.012 290);
+    font-size: clamp(1.0625rem, 0.95rem + 0.5vw, 1.25rem);
+    font-weight: 400;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  .hero__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .hero__cta {
+    min-height: 3rem;
+    padding-inline: 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    box-shadow: var(--shadow-md);
+  }
+
+  .hero__cta--solid {
+    background: #fff;
+    color: var(--ink);
+  }
+
+  .hero__cta--ghost {
+    background: oklch(1 0 0 / 0.08);
+    border-color: oklch(1 0 0 / 0.55);
+    color: #fff;
+  }
+
+  .hero__cta--ghost:hover {
+    background: oklch(1 0 0 / 0.16);
+    border-color: #fff;
+  }
+
+  /* La version corta existe solo en vertical */
+  .hero__cta-alt {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .hero__pie {
+    position: relative;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .hero__nota {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+  }
+
+  .hero__nota p {
+    color: var(--slate-600);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .hero__sello {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--slate-100);
+    border-radius: var(--r-pill);
+    background: #fff;
+    color: var(--ink);
+    font-size: 0.6875rem;
+    font-weight: 700;
+  }
+
+  .hero__sello :global(svg) {
+    color: oklch(0.75 0.15 80);
+  }
+
+  /* ==========================================================================
+     Vertical
+     El banner movil ya viene en 9:16 (941x1672), asi que el panel adopts esa
+     misma proporcion y la imagen entra a sangre sin recortar un solo pixel.
+     El panel vuelve a ser la caja pintada, el velo pesa abajo donde esta el
+     texto, y el bloque de confianza sale como texto centrado.
+     ========================================================================== */
+
+  @media (max-width: 48rem) {
+    .hero__card {
+      justify-content: flex-start;
+      /* Mas aire entre el banner y el bloque de confianza: en vertical el
+         sello queda pegado a la imagen si no se le deja caer un tramo. */
+      gap: 2rem;
+      min-height: 0;
+      padding: 0;
+      overflow: hidden;
+      background: none;
+      box-shadow: none;
+    }
+
+    .hero__card::after {
+      content: none;
+    }
+
+    .hero__slot--movil {
+      display: block;
+      width: 100%;
+    }
+
+    .hero__slot--escritorio {
+      display: none;
+    }
+
+    .hero__panel {
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      aspect-ratio: 9 / 16;
+      max-height: 84svh;
+      padding: 1.25rem;
+      border-radius: var(--r-media);
+      overflow: hidden;
+      background-color: var(--primary-deep);
+      background-image: linear-gradient(
+        320deg,
+        var(--primary-deep) 0%,
+        var(--primary) 42%,
+        var(--brand) 100%
+      );
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* El banner entra completo, asi que el velo se retira en la mitad de
+       arriba y se concentra donde va el texto. */
+    .hero__panel::after {
+      background:
+        linear-gradient(180deg, oklch(1 0 0 / 0.1), oklch(1 0 0 / 0) 22%),
+        linear-gradient(
+          180deg,
+          oklch(0.25 0.11 275 / 0) 26%,
+          oklch(0.25 0.11 275 / 0.5) 58%,
+          oklch(0.25 0.11 275 / 0.86) 100%
+        );
+    }
+
+    /* El contenido ocupa toda la altura del panel y el bloque de texto se
+       ancla abajo, dejando el banner limpio arriba. */
+    .hero__contenido {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: flex-end;
+      row-gap: 0.75rem;
+      margin-block: 0;
+    }
+
+    /* 65 caracteres en 3 lineas: a 20 px entran 27 por linea, asi que el
+       titular deja de tapar el banner sin pasarse a 4 lineas. */
+    .hero__titulo {
+      font-size: clamp(1.25rem, 1.16rem + 0.45vw, 1.375rem);
+      line-height: 1.24;
+      text-wrap: balance;
+    }
+
+    .hero__bajada {
+      margin-top: 0;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+    }
+
+    /* Sin margin-top auto: un margen automatico se come el espacio libre
+       antes que justify-content, y el bloque se partiria en dos. */
+    .hero__acciones {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+      margin-top: 0;
+      padding-top: 0.5rem;
+    }
+
+    .hero__cta {
+      justify-content: center;
+      min-height: 2.75rem;
+      gap: 0.25rem;
+      padding-inline: 0.75rem;
+      font-size: 0.75rem;
+    }
+
+    .hero__cta :global(svg) {
+      width: 14px;
+      height: 14px;
+    }
+
+    .hero__cta-label {
+      display: none;
+    }
+
+    .hero__cta-alt {
+      position: static;
+      width: auto;
+      height: auto;
+      margin: 0;
+      overflow: visible;
+      clip-path: none;
+    }
+
+    /* El bloque de confianza no lleva caja ni color de marca: en vertical
+       se resuelve como texto centrado pegado bajo el panel. */
+    .hero__nota {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: none;
+      text-align: center;
+    }
+
+    .hero__sello {
+      order: -1;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--slate-500);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero__nota p {
+      max-width: 36ch;
+      color: var(--slate-500);
+      font-size: 0.875rem;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+  }
+
+  /* Por debajo de 320 px las dos columnas dejan de respirar */
+  @media (max-width: 20rem) {
+    .hero__acciones {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ======================================================================
+     ENTRADA AL CARGAR - sin JavaScript
+     El hero esta siempre arriba del todo, asi que no necesita un trigger
+     de scroll: basta con escalonar la aparicion del bloque de texto.
+     ====================================================================== */
+
+  @keyframes hero-entra {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero__titulo {
+      animation: hero-entra 0.55s var(--ease-out) 0.05s both;
+    }
+
+    .hero__bajada {
+      animation: hero-entra 0.55s var(--ease-out) 0.16s both;
+    }
+
+    .hero__acciones {
+      animation: hero-entra 0.5s var(--ease-out) 0.26s both;
+    }
+  }
+</style>

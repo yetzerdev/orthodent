@@ -1,0 +1,35 @@
+# Dependencias y build
+node_modules/
+dist/
+.astro/
+.vercel/
+.netlify/
+
+# Entorno. El token de Mapbox NO va aqui: se declara como variable de entorno
+# en el panel del host (Netlify/Vercel/Cloudflare). Si se sube el .env al repo,
+# el build local y el del host pueden terminar con tokens distintos y el mapa
+# funciona en uno y no en el otro.
+.env
+.env.local
+.env.*.local
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# Editores
+.vscode/
+.idea/
+
+# Scripts temporales de debug
+tmp-*.cjs
+example.txt
+
+# Copia suelta del logotipo en la raiz. El que usa el sitio vive en
+# src/assets/images/logo-orthodent.png.
+/orthodent.png
+
+# Video de referencia sin usar en el sitio (9 MB). Se queda en local.
+public/og/HERO.mp4

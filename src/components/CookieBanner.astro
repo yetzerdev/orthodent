@@ -1,0 +1,234 @@
+---
+import { textos } from '../i18n';
+
+const lang = Astro.currentLocale ?? 'es';
+const t = textos(lang);
+const privacidad = lang === 'en' ? '/en/privacy' : '/privacidad';
+---
+
+<section class="aviso" id="aviso-cookies" data-cookies hidden aria-labelledby="cookies-titulo">
+  <div class="aviso__caja">
+    <div class="aviso__texto">
+      <h2 class="aviso__titulo" id="cookies-titulo">{t.cookies.titulo}</h2>
+      <p class="aviso__desc">
+        {t.cookies.desc}
+        <a href={privacidad}>{lang === 'en' ? 'Privacy Policy' : 'política de privacidad'}</a>.
+      </p>
+    </div>
+
+    <div class="aviso__acciones">
+      <a class="aviso__enlace" href={privacidad}>{t.cookies.mas}</a>
+
+      <button class="aviso__boton aviso__boton--ghost" type="button" data-cookies-rechazar>
+        {t.cookies.rechazar}
+      </button>
+
+      <button class="aviso__boton aviso__boton--solido" type="button" data-cookies-aceptar>
+        {t.cookies.aceptar}
+      </button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .aviso {
+    position: fixed;
+    z-index: 90;
+    inset: auto 0 0;
+    padding: var(--gutter);
+    pointer-events: none;
+  }
+
+  .aviso[hidden] {
+    display: none;
+  }
+
+  .aviso__caja {
+    display: grid;
+    gap: 1rem;
+    max-width: 52rem;
+    margin-inline: auto;
+    padding: 1.25rem;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--r-panel);
+    background: #fff;
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto;
+    animation: aviso-entra 0.4s var(--ease-out) both;
+  }
+
+  @keyframes aviso-entra {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .aviso__titulo {
+    color: var(--ink);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .aviso__desc {
+    margin-top: 0.25rem;
+    color: var(--slate-600);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    max-width: 52ch;
+  }
+
+  .aviso__desc a {
+    color: var(--brand-strong);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .aviso__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .aviso__enlace {
+    margin-right: auto;
+    color: var(--slate-500);
+    font-size: 0.75rem;
+    text-decoration: none;
+  }
+
+  .aviso__enlace:hover {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .aviso__boton {
+    padding: 0.5rem 0.9375rem;
+    border-radius: var(--r-pill);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+
+  .aviso__boton--ghost {
+    border: 1px solid var(--slate-200);
+    background: var(--slate-100);
+    color: var(--ink);
+  }
+
+  .aviso__boton--ghost:hover {
+    border-color: var(--slate-300);
+  }
+
+  .aviso__boton--solido {
+    border: 0;
+    background: var(--brand);
+    color: #fff;
+  }
+
+  .aviso__boton--solido:hover {
+    background: var(--brand-strong);
+  }
+
+  .aviso__boton:active {
+    transform: scale(0.985);
+  }
+
+  @media (min-width: 40rem) {
+    .aviso__caja {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.5rem;
+    }
+
+    .aviso__acciones {
+      flex-wrap: nowrap;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aviso__caja {
+      animation: none;
+    }
+
+    .aviso__boton {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  /* La decision se guarda en localStorage. Si no hay decision guardada, el
+     banner aparece: es el comportamiento por defecto que esperaria una
+     persona. Nada se activa antes de que responda, salvo el mapa, que
+     documenta por separado la razon de su carga. */
+  const CLAVE = 'orthodent:cookies';
+  const banner = document.querySelector<HTMLElement>('[data-cookies]');
+  const botonAceptar = document.querySelector<HTMLButtonElement>('[data-cookies-aceptar]');
+  const botonRechazar = document.querySelector<HTMLButtonElement>('[data-cookies-rechazar]');
+
+  const decisionGuardada = () => {
+    try {
+      return localStorage.getItem(CLAVE);
+    } catch {
+      /* Modo privado o storage bloqueado: se trata como sin decision. */
+      return null;
+    }
+  };
+
+  const guardar = (valor: 'aceptadas' | 'rechazadas') => {
+    try {
+      localStorage.setItem(CLAVE, valor);
+    } catch {
+      /* Sin storage la decision dura lo que dura la pestana. */
+    }
+  };
+
+  const cerrar = () => {
+    if (banner) banner.hidden = true;
+    reservarEspacio();
+  };
+
+  /* La tarjeta es fija: sin reservar su alto al final del documento tapa el
+     cierre del pie (redes, aviso legal) y no hay forma de scrollear hasta el.
+     La variable la consume el body en global.css. */
+  function reservarEspacio() {
+    const raiz = document.documentElement;
+    if (!banner || banner.hidden) {
+      raiz.style.removeProperty('--aviso-alto');
+      return;
+    }
+    raiz.style.setProperty('--aviso-alto', `${banner.offsetHeight}px`);
+  }
+
+  if (banner && !decisionGuardada()) {
+    banner.hidden = false;
+    reservarEspacio();
+  }
+
+  window.addEventListener('resize', reservarEspacio);
+
+  botonAceptar?.addEventListener('click', () => {
+    guardar('aceptadas');
+    cerrar();
+  });
+
+  botonRechazar?.addEventListener('click', () => {
+    guardar('rechazadas');
+    cerrar();
+  });
+</script>

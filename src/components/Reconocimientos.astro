@@ -1,0 +1,604 @@
+---
+/**
+ * Equipamiento y diferenciadores clinicos.
+ *
+ * La foto de la izquierda y la lista de la derecha estan conectadas: cada
+ * diferenciador trae su propia foto, y los controles que lleva la imagen son
+ * los que la cambian. Las tarjetas de texto NO son clicables a proposito: el
+ * cambio se hace desde la imagen y el morado de la tarjeta activa la sigue,
+ * para que el color siempre coincida con lo que se esta viendo.
+ *
+ * Las fotos llegan con proporciones distintas (de 0.75 a 2.17), asi que el
+ * panel las recorta a un marco fijo. Sin eso el alto del panel cambiaria en
+ * cada cambio y los diferenciales de al lado bailarian.
+ */
+import { Picture } from 'astro:assets';
+import Icon from './Icon.astro';
+
+/* Los archivos se renombraron a slugs ASCII: con acento y con espacio los
+   nombres terminaban percent-encoded en la URL de cada imagen, que funciona
+   pero se rompe con cualquier CDN o hosting que normalice el nombre. */
+import escaner from '../assets/images/3d.png';
+import sedacion from '../assets/images/sedacion.webp';
+import panoramica from '../assets/images/pnaoramica.jpg';
+import clinicas from '../assets/images/fotos-clinicas.jpg';
+import laboratorio from '../assets/images/laboratorio.jpg';
+
+const FOTOS = {
+  tresd: escaner,
+  sedacion,
+  panoramica,
+  clinicas,
+  laboratorio,
+} as const;
+
+interface Diferenciador {
+  etiqueta?: string;
+  titulo: string;
+  desc: string;
+  enlace?: string;
+  href?: string;
+  foto: keyof typeof FOTOS;
+  fotoAlt: string;
+}
+
+interface Props {
+  titulo: string;
+  bajada: string;
+  destacados: Diferenciador[];
+  etiquetaGrupo: string;
+  anterior: string;
+  siguiente: string;
+}
+
+const { titulo, bajada, destacados, etiquetaGrupo, anterior, siguiente } = Astro.props;
+
+/* El primero es el activo por defecto: el orden del diccionario ya viene
+   ordenado por importancia, asi que no hace falta un indice aparte. */
+const activo = 0;
+
+/* El enlace de "Conoce nuestras sedes" sale del cuerpo del documento: dentro
+   de una tarjeta que es un boton no se puede anidar un <a>, porque seria
+   interactivo dentro de interactivo y ni el teclado ni el lector de pantalla
+   lo manejan bien. */
+const cta = destacados.find((item) => item.enlace && item.href);
+---
+
+<section class="section shell rec" id="reconocimientos" aria-labelledby="rec-titulo">
+  <div class="rec__cabecera" data-reveal-group>
+    <h2 id="rec-titulo">{titulo}</h2>
+    <div class="rec__cabecera-lateral">
+      <p>{bajada}</p>
+      {
+        cta && (
+          <a class="rec__enlace-cabecera" href={cta.href}>
+            {cta.enlace}
+            <Icon name="arrow-right-01" size={15} />
+          </a>
+        )
+      }
+    </div>
+  </div>
+
+  <div class="rec__malla" data-reveal-group>
+    <div
+      class="rec__foto"
+      role="group"
+      aria-roledescription="carrusel"
+      aria-label={etiquetaGrupo}
+      data-reveal
+    >
+      {
+        destacados.map((item, i) => (
+          <figure
+            class="rec__capa"
+            data-capa={i}
+            hidden={i !== activo}
+            aria-label={`${i + 1} / ${destacados.length}`}
+          >
+            <Picture
+              src={FOTOS[item.foto]}
+              alt={item.fotoAlt}
+              widths={[400, 544, 800, 1080]}
+              sizes="(min-width: 64rem) 34rem, (min-width: 48rem) 30rem, 100vw"
+              loading={i === activo ? 'eager' : 'lazy'}
+              fetchpriority={i === activo ? 'high' : 'auto'}
+              decoding="async"
+            />
+            <figcaption class="rec__pie">{item.titulo}</figcaption>
+          </figure>
+        ))
+      }
+
+      {/* Los controles van sobre la imagen. La tira es pointer-events:none
+          salvo los botones, para no estorbar. */}
+      <div class="rec__controles">
+        <button
+          type="button"
+          class="rec__flecha"
+          data-rec-ant
+          aria-label={anterior}
+        >
+          <Icon name="arrow-left-01" size={18} />
+        </button>
+
+        <button
+          type="button"
+          class="rec__flecha"
+          data-rec-sig
+          aria-label={siguiente}
+        >
+          <Icon name="arrow-right-01" size={18} />
+        </button>
+
+        <span
+          class="rec__contador"
+          data-rec-contador
+          data-total={destacados.length}
+          aria-live="polite"
+        >
+          {String(activo + 1).padStart(2, '0')} / {String(destacados.length).padStart(2, '0')}
+        </span>
+      </div>
+    </div>
+
+    {/* Lista informativa: no es interactiva. El morado lo marca data-activa,
+        que sigue el indice de la imagen. */}
+    <ul class="rec__lista" aria-label={etiquetaGrupo}>
+      {
+        destacados.map((item, i) => (
+          <li
+            class="rec__item"
+            data-item={i}
+            data-activa={i === activo ? 'true' : 'false'}
+          >
+            <span class="rec__etiqueta">{item.etiqueta}</span>
+            <span class="rec__titulo-item">{item.titulo}</span>
+            <span class="rec__desc">{item.desc}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<script>
+  /* El cambio lo disparan los dos botones de la imagen. Se actualizan tres
+     cosas a la vez: que capa se ve, que tarjeta lleva el morado, y el contador.
+     Nada se anima con JS: el CSS lee data-activa y decide. */
+  const raiz = document.getElementById('reconocimientos');
+
+  if (raiz) {
+    const capas = [...raiz.querySelectorAll<HTMLElement>('[data-capa]')];
+    const items = [...raiz.querySelectorAll<HTMLElement>('[data-item]')];
+    const contador = raiz.querySelector<HTMLElement>('[data-rec-contador]');
+    const anterior = raiz.querySelector<HTMLButtonElement>('[data-rec-ant]');
+    const siguiente = raiz.querySelector<HTMLButtonElement>('[data-rec-sig]');
+    const total = capas.length;
+
+    const mostrar = (indice: number) => {
+      // Sin modulo: en los extremos no se da la vuelta en silencio, para que
+      // el usuario sepa que llego al principio o al final.
+      if (indice < 0 || indice >= total) return;
+
+      capas.forEach((capa, i) => {
+        capa.hidden = i !== indice;
+      });
+
+      // El morado sigue a la imagen.
+      items.forEach((item, i) => {
+        item.dataset.activa = String(i === indice);
+      });
+
+      if (contador) contador.textContent = `${String(indice + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
+
+      // En el primero no hay anterior y en el ultimo no hay siguiente. No se
+      // da la vuelta: el contador ya dice en que position se esta.
+      if (anterior) anterior.disabled = indice === 0;
+      if (siguiente) siguiente.disabled = indice === total - 1;
+    };
+
+    const actual = () => capas.findIndex((c) => !c.hidden);
+
+    /* Estado inicial: la primer flecha arranca apagada. Sin esta llamada el
+       boton anterior quedaria activo sobre la primera foto y no haria nada. */
+    mostrar(actual());
+
+    anterior?.addEventListener('click', () => mostrar(actual() - 1));
+    siguiente?.addEventListener('click', () => mostrar(actual() + 1));
+
+    /* Flechas del teclado mientras el foco este dentro de la imagen. El bloque
+       tiene pointer-events:none salvo los botones, asi que el foco solo puede
+       estar en las flechas. */
+    raiz.querySelector<HTMLElement>('.rec__foto')?.addEventListener('keydown', (evento) => {
+      if (evento.key === 'ArrowLeft') {
+        evento.preventDefault();
+        mostrar(actual() - 1);
+      } else if (evento.key === 'ArrowRight') {
+        evento.preventDefault();
+        mostrar(actual() + 1);
+      } else if (evento.key === 'Home') {
+        evento.preventDefault();
+        mostrar(0);
+      } else if (evento.key === 'End') {
+        evento.preventDefault();
+        mostrar(total - 1);
+      }
+    });
+  }
+</script>
+
+<style>
+  .rec__cabecera {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 46rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .rec__cabecera h2 {
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .rec__cabecera-lateral {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.875rem;
+  }
+
+  .rec__cabecera p {
+    max-width: 30rem;
+    color: var(--slate-600);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+  }
+
+  .rec__enlace-cabecera {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .rec__enlace-cabecera :global(svg) {
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  .rec__malla {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  /* El panel es el contenedor de las capas. No lleva position relative porque
+     las capas se posicionan absolutas respecto a el y el alto lo fija el
+     aspect-ratio de la capa activa, no el contenido.
+
+     Cuadrada y con tope de ancho: las cinco fotos son verticales (0.71-0.75),
+     asi que un marco apaisado les cortaba casi la mitad. El tope evita que en
+     una tablet a ancho completo la foto mida 900px de alto. */
+  .rec__foto {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 30rem;
+    aspect-ratio: 1 / 1;
+    margin-inline: auto;
+    border-radius: var(--r-panel);
+    background: var(--ink);
+  }
+
+  .rec__capa {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+  }
+
+  .rec__capa :global(picture),
+  .rec__capa :global(img) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .rec__capa :global(img) {
+    object-fit: cover;
+  }
+
+  /* El pie va con degradado abajo: si es una caja solida tapa la foto y ademas
+     el texto claro sobre foto clara no tendria contraste garantizado. */
+  .rec__pie {
+    position: absolute;
+    inset: auto 0 0;
+    padding: 3.5rem 1.25rem 1.125rem;
+    background: linear-gradient(to top, rgb(9 14 26 / 0.9), rgb(9 14 26 / 0));
+    color: #fff;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.35;
+    text-wrap: balance;
+  }
+
+  .rec__lista {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rec__item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+    width: 100%;
+    padding: 1.25rem;
+    border: 1px solid var(--slate-100);
+    border-radius: var(--r-card);
+    background: #fff;
+    text-align: left;
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+
+  /* El acento de marca lo lleva la tarjeta que acompana a la foto que se esta
+     viendo. Se sincroniza desde el script de los botones. */
+  .rec__item[data-activa='true'] {
+    border-color: transparent;
+    background: var(--brand);
+  }
+
+  /* Las tarjetas no son botones ni enlaces: no se les pone hover ni foco, para
+     que no prometan algo que no hacen. El unico interactivo de la lista es el
+     enlace de la cabecera. */
+
+  .rec__etiqueta {
+    display: block;
+    margin-bottom: 0.125rem;
+    color: oklch(0.93 0.02 290);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .rec__titulo-item {
+    max-width: 24ch;
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .rec__item[data-activa='true'] .rec__titulo-item {
+    max-width: 24ch;
+    color: #fff;
+  }
+
+  .rec__desc {
+    max-width: 34ch;
+    color: var(--slate-600);
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .rec__item[data-activa='true'] .rec__desc {
+    color: oklch(0.96 0.015 290);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .rec__enlace-cabecera:hover {
+      color: var(--brand);
+    }
+
+    .rec__enlace-cabecera:hover :global(svg) {
+      transform: translateX(3px);
+    }
+  }
+
+  /* ======================================================================
+     Controles de la imagen
+     ====================================================================== */
+
+  .rec__controles {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .rec__flecha {
+    position: absolute;
+    top: 50%;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 1px solid rgb(255 255 255 / 0.35);
+    border-radius: 999px;
+    background: rgb(9 14 26 / 0.55);
+    color: #fff;
+    cursor: pointer;
+    pointer-events: auto;
+    transform: translateY(-50%);
+    backdrop-filter: blur(6px);
+    transition:
+      background-color var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out),
+      opacity var(--dur-base) var(--ease-out);
+  }
+
+  .rec__flecha[data-rec-ant] {
+    left: 0.75rem;
+  }
+
+  .rec__flecha[data-rec-sig] {
+    right: 0.75rem;
+  }
+
+  /* En los extremos el boton se atenua, pero sigue siendo tabulable para no
+     dejar a quien navega con teclado sin salida. */
+  .rec__flecha:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .rec__flecha:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  .rec__contador {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    background: rgb(9 14 26 / 0.55);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+    backdrop-filter: blur(6px);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .rec__flecha:not(:disabled):hover {
+      background: var(--brand);
+      border-color: transparent;
+    }
+  }
+
+  /* El panel tiene alto fijo por aspect-ratio, asi que las pestanas no tienen
+     que igualarse a el: se centran en su propia columna y ya. */
+  .rec__foto {
+    align-self: center;
+  }
+
+  /* ======================================================================
+     Escritorio: la foto ocupa media fila y los diferenciadores se alinean
+     a su altura, como en la referencia.
+     ====================================================================== */
+
+  @media (min-width: 48rem) {
+    /* Sin tope de ancho: con el max-width de la base el parrafo se comia el
+       espacio y el titulo se partia en cuatro lineas. */
+    .rec__cabecera {
+      max-width: none;
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 3rem;
+      margin-bottom: 3.5rem;
+    }
+
+    /* flex: none evita que el flexbox lo estruje por debajo de su ancho y lo
+       deje en dos lineas. */
+    .rec__cabecera h2 {
+      flex: none;
+      max-width: 26ch;
+    }
+
+    .rec__cabecera-lateral {
+      flex: none;
+      align-items: flex-end;
+      margin-left: auto;
+      max-width: 26rem;
+    }
+
+    /* Hasta 64rem la foto va sola a todo el ancho: con la columna de texto al
+       lado, las tarjetas bajaban a 260px y los titulos se partian en cuatro
+       renglones. */
+    .rec__pie {
+      padding: 4.5rem 1.5rem 1.375rem;
+      font-size: 1rem;
+    }
+  }
+
+  /* ======================================================================
+     Escritorio: foto y diferenciadores, uno al lado del otro y centrados.
+     La foto tiene tope de 34rem (544px): mas ancha se reescala por encima de
+     su resolucion real y en PC se ve blanda.
+     ====================================================================== */
+
+  @media (min-width: 64rem) {
+    .rec__malla {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(1.75rem, 3vw, 3rem);
+    }
+
+    /* Cada mitad se pega al centro, asi el par queda junto y el aire sobrante
+       cae en los bordes de la pagina. */
+    .rec__foto {
+      max-width: 34rem;
+      margin-inline: auto 0;
+    }
+
+    /* space-between las lanzaba a los bordes de la foto; centradas y con un
+       gap corto quedan como un bloque compacto. */
+    .rec__lista {
+      align-content: center;
+      gap: 0.75rem;
+      max-width: 34rem;
+      margin-inline: 0 auto;
+    }
+
+    /* En una columna estrecha el titulo y la descripcion lado a lado dejaban
+       renglones de dos palabras. Apilados se leen de un tiron. */
+    .rec__item {
+      padding: 1.125rem 1.25rem;
+      gap: 0.3rem;
+    }
+
+    .rec__etiqueta {
+      margin-bottom: 0;
+    }
+
+    .rec__titulo-item {
+      max-width: none;
+    }
+
+    .rec__desc {
+      max-width: none;
+      font-size: 0.8125rem;
+    }
+  }
+
+  /* ----------------------------------------------------------------------
+     Cambio de foto. Las capas se apilan y la inactiva se oculta, asi que el
+     panel no cambia de alto ni de proporcion entre un diferenciador y otro.
+     ---------------------------------------------------------------------- */
+
+  .rec__capa {
+    animation: rec-entra var(--dur-base) var(--ease-out) both;
+  }
+
+  @keyframes rec-entra {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rec__capa {
+      animation: none;
+    }
+
+    .rec__item,
+    .rec__enlace-cabecera :global(svg) {
+      transition: none;
+    }
+  }
+</style>

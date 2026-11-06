@@ -1,0 +1,412 @@
+---
+/**
+ * Los cinco sistemas de ortodoncia, uno por uno.
+ *
+ * Va justo despues de Equipamiento y diferenciadores, porque contesta la misma
+ * pregunta por otra via: alli se demuestra que la clinica tiene tecnologia,
+ * aqui se explica que se puede hacer con esa tecnologia.
+ *
+ * El primero, el CCO, no es una tarjeta mas: ocupa una fila entera porque es
+ * el sistema certificado y el que el doctor quiere destacar. Los otros cuatro
+ * van en retícula de dos.
+ *
+ * Cada sistema trae su foto del cliente. Las cinco llegan con proporciones
+ * distintas, asi que todas se recortan a un marco fijo: sin eso las fichas
+ * quedan con alturas diferentes y la retícula se ve rota.
+ */
+import { Picture } from 'astro:assets';
+import Icon from './Icon.astro';
+
+/* Las fotos del cliente. Cada archivo es una imagen distinta con su propio
+   formato y proporcion, asi que el mapa es por clave y no una posicion: si
+   mañana llega una sexta opcion, se agrega aqui y en el diccionario. */
+import cco from '../assets/images/CCO.webp';
+import invisalign from '../assets/images/invisalign.jpg';
+import convencionales from '../assets/images/CONVENCIONALES.jpg';
+import zafiro from '../assets/images/ZAFIRO.jpg';
+import metalicos from '../assets/images/METALICOS.jpg';
+
+const fotos = {
+  cco,
+  invisalign,
+  estetico: convencionales,
+  zafiro,
+  metalico: metalicos,
+};
+
+/* Descripcion de la foto, en el idioma de la pagina. Se usa dos veces: como
+   texto alternativo y como pie de foto, asi que esta en un solo lugar. */
+const descripciones = {
+  cco: {
+    es: 'Brackets del sistema CCO de autoligado en la arcada superior',
+    en: 'CCO self-ligating brackets on the upper arch',
+  },
+  invisalign: {
+    es: 'Alineador transparente de Invisalign sobre los dientes',
+    en: 'Clear Invisalign aligner over the teeth',
+  },
+  estetico: {
+    es: 'Brackets cerámicos convencionales con liga elástica',
+    en: 'Conventional ceramic brackets with elastic ligature',
+  },
+  zafiro: {
+    es: 'Brackets transparentes de zafiro en la arcada superior',
+    en: 'Clear sapphire brackets on the upper arch',
+  },
+  metalico: {
+    es: 'Brackets metálicos de acero inoxidable con arco',
+    en: 'Stainless steel metal brackets with archwire',
+  },
+} as const;
+
+const lang = Astro.currentLocale ?? 'es';
+
+/* El alt describe la foto, no la marca: un lector de pantalla tiene que oir
+   que se ve, no el nombre comercial del producto. */
+const alts = {
+  cco: lang === 'en' ? 'Patient wearing CCO System Self-Ligated braces' : 'Paciente con brackets CCO System Self-Ligated',
+  invisalign: lang === 'en' ? 'Clear Invisalign aligner' : 'Alineador transparente Invisalign',
+  estetico: lang === 'en' ? 'Aesthetic conventional braces' : 'Brackets convencionales estéticos',
+  zafiro: lang === 'en' ? 'Sapphire braces' : 'Brackets de zafiro',
+  metalico: lang === 'en' ? 'Metal braces' : 'Brackets metálicos',
+} as const;
+
+interface Sistema {
+  icon: string;
+  esquema: keyof typeof fotos;
+  nombre: string;
+  nota?: string;
+  desc: string;
+}
+
+interface Props {
+  sistemas: Sistema[];
+}
+
+const { sistemas } = Astro.props;
+
+const [principal, ...resto] = sistemas;
+
+const pieDeFoto = (clave: keyof typeof descripciones) => descripciones[clave][lang];
+---
+
+<section class="section shell orto" id="ortodoncia" aria-labelledby="orto-titulo">
+  <div class="orto__cabecera" data-reveal-group>
+    <h2 id="orto-titulo">{lang === 'en' ? 'Modern orthodontics' : 'Ortodoncia moderna'}</h2>
+    <p>
+      {lang === 'en'
+        ? 'Five ways to straighten your teeth, all available at the same practice. Each one is explained with a photo so you can see the difference before your visit.'
+        : 'Cinco formas de enderezar los dientes, y todas disponibles en la misma consulta. Cada una se explica con su foto para que se vea la diferencia antes de la cita.'}
+    </p>
+  </div>
+
+  {/* El sistema certificado ocupa la fila completa. La imagen va a la izquierda
+      en escritorio y el texto a la derecha, al reves de las fichas de abajo,
+      para que la entrada principal se lea como destacado y no como una mas. */}
+  <article class="orto__principal" data-reveal>
+    <figure class="orto__principal-foto">
+      <Picture
+        src={fotos[principal.esquema]}
+        alt={alts[principal.esquema]}
+        widths={[400, 640, 900]}
+        sizes="(min-width: 60rem) 30rem, 100vw"
+        loading="lazy"
+        decoding="async"
+      />
+      <figcaption>{pieDeFoto(principal.esquema)}</figcaption>
+    </figure>
+
+    <div class="orto__principal-texto">
+      <span class="orto__principal-insignia">
+        <Icon name="shield-check" size={14} />
+        <span>{principal.nota}</span>
+      </span>
+
+      <h3>{principal.nombre}</h3>
+      <p>{principal.desc}</p>
+
+      <a class="orto__enlace" href="#agendar">
+        <span>{lang === 'en' ? 'Ask about this system' : 'Consultar por este sistema'}</span>
+        <Icon name="arrow-right-01" size={16} />
+      </a>
+    </div>
+  </article>
+
+  <ul class="orto__rejilla" data-reveal-group>
+    {
+      resto.map((s) => (
+        <li class="orto__ficha" data-reveal>
+          <figure class="orto__foto">
+            <Picture
+              src={fotos[s.esquema]}
+              alt={alts[s.esquema]}
+              widths={[320, 480, 640]}
+              sizes="(min-width: 60rem) 18rem, (min-width: 40rem) 45vw, 100vw"
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
+
+          <div class="orto__ficha-texto">
+            <h3 class="orto__nombre">
+              <Icon name={s.icon} size={17} />
+              <span>{s.nombre}</span>
+            </h3>
+
+            <p class="orto__desc">{s.desc}</p>
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<style>
+  .orto__cabecera {
+    max-width: 46rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .orto__cabecera h2 {
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .orto__cabecera p {
+    margin-top: 0.875rem;
+    color: var(--slate-600);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+
+  /* Sistema principal: fondo de marca solido y contenido en dos columnas.
+     El esquema va sobre el color, asi que los trazos del dibujo usan tonos
+     claros y se leen igual que el texto. */
+  .orto__principal {
+    display: grid;
+    gap: 1.75rem;
+    padding: 1.5rem;
+    border-radius: var(--r-media);
+    background: var(--brand);
+    color: #fff;
+  }
+
+  /* La foto del cliente es cuadrada (1000x1000), asi que se recorta en un marco
+   de proporcion fija: sin esto el bloque de marca queda tan alto como ancho y
+   empuja el texto fuera de pantalla. El recorte al centro es seguro porque el
+   diente va en el medio en las cinco fotos. */
+  .orto__principal-foto {
+    overflow: hidden;
+    border-radius: var(--r-card);
+    background: #fff;
+  }
+
+  .orto__principal-foto :global(picture),
+  .orto__principal-foto :global(img) {
+    display: block;
+    width: 100%;
+  }
+
+  .orto__principal-foto :global(img) {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+
+  .orto__principal-foto figcaption {
+    padding: 0.625rem 0.875rem;
+    border-top: 1px solid var(--slate-100);
+    color: var(--slate-500);
+    font-size: 0.75rem;
+    line-height: 1.45;
+  }
+
+  .orto__principal-insignia {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.3125rem 0.6875rem;
+    border-radius: var(--r-pill);
+    background: oklch(1 0 0 / 0.18);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .orto__principal h3 {
+    margin-top: 0.875rem;
+    font-size: clamp(1.375rem, 2.5vw, 1.75rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .orto__principal-texto > p {
+    margin-top: 0.625rem;
+    max-width: 52ch;
+    color: oklch(1 0 0 / 0.86);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  /* Enlace al formulario. Sobre fondo de marca necesita su propio borde: sin
+     el, se pierde contra el color. */
+  .orto__enlace {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    padding: 0.625rem 1.125rem;
+    border: 1px solid oklch(1 0 0 / 0.4);
+    border-radius: var(--r-pill);
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+      background-color var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out);
+  }
+
+  .orto__enlace:hover {
+    border-color: #fff;
+    background: oklch(1 0 0 / 0.12);
+  }
+
+  .orto__rejilla {
+    display: grid;
+    gap: 0.875rem;
+    margin: 0.875rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .orto__ficha {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 1.25rem;
+    border: 1px solid var(--slate-100);
+    border-radius: var(--r-card);
+    background: #fff;
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out);
+  }
+
+  .orto__ficha:hover {
+    border-color: var(--slate-200);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Las cuatro fotos vienen con proporciones distintas (1.24 a 2.17), asi que
+     todas se recortan al mismo marco de 3/2. Sin esto las fichas quedan con
+     alturas distintas y la retícula se ve rota. */
+  .orto__foto {
+    overflow: hidden;
+    border-radius: var(--r-control);
+    background: var(--surface);
+  }
+
+  .orto__foto :global(picture),
+  .orto__foto :global(img) {
+    display: block;
+    width: 100%;
+  }
+
+  .orto__foto :global(img) {
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+  }
+
+  .orto__ficha-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .orto__nombre {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ink);
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .orto__nombre :global(svg) {
+    flex-shrink: 0;
+    color: var(--brand);
+  }
+
+  .orto__desc {
+    color: var(--slate-600);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+
+  @media (min-width: 40rem) {
+    .orto__rejilla {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.25rem;
+    }
+  }
+
+  /* En movil la foto va con la foto pegada al borde de la ficha, igual que en
+     escritorio, para que el recorte se lea como imagen y no como bloque de
+     color dentro de un margen. */
+  @media (max-width: 39.999rem) {
+    .orto__ficha {
+      gap: 0.875rem;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .orto__foto {
+      border-radius: 0;
+    }
+
+    .orto__ficha-texto {
+      padding: 0 1.25rem 1.25rem;
+    }
+  }
+
+  @media (min-width: 60rem) {
+    .orto__principal {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+      align-items: center;
+      gap: 2.5rem;
+      padding: 2rem 2.5rem;
+    }
+
+    /* La ficha va con la foto pegada arriba y sin padding propio: el recorte
+       llega hasta el borde de la tarjeta. */
+    .orto__ficha {
+      gap: 0.875rem;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .orto__foto {
+      border-radius: 0;
+    }
+
+    .orto__ficha-texto {
+      padding: 0 1.25rem 1.25rem;
+    }
+
+    .orto__rejilla {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orto__ficha,
+    .orto__enlace {
+      transition: none;
+    }
+  }
+</style>

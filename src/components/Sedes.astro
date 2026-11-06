@@ -1,0 +1,759 @@
+---
+import { Picture } from 'astro:assets';
+import whatsappIcon from '../assets/whatsapp-svgrepo-com.svg?raw';
+import fachada from '../assets/images/local-exterior.jpg';
+import { textos } from '../i18n';
+import { datosHorarios } from '../i18n/listados';
+
+const token = import.meta.env.PUBLIC_MAPBOX_TOKEN ?? '';
+
+const lang = Astro.currentLocale ?? 'es';
+const t = textos(lang);
+const en = lang === 'en';
+
+// El SVG trae la cabecera XML, un comentario y un fill negro fijo. Se recorta
+// hasta la etiqueta <svg> y el color pasa a heredarse del boton para que el
+// icono tome el índigo de la marca sin duplicar el archivo.
+// Ademas del recorte, se quita el <title> interno del archivo: el boton ya
+// tiene texto visible "WhatsApp" y el titulo se colaba como texto suelto.
+const whatsappSvg = whatsappIcon
+  .slice(whatsappIcon.indexOf('<svg'))
+  .replace(/<title>.*?<\/title>/s, '')
+  .replace('fill="#000000"', 'fill="currentColor"');
+
+const sede = {
+  titulo: t.sedes.tituloSede,
+  zona: t.sedes.calle,
+  coords: [-86.7902978, 15.7746393],
+  etiquetas: en
+    ? ['Digital Orthodontics', '3D Scanning', 'Maxillofacial Surgery']
+    : ['Ortodoncia Digital', 'Escaneo 3D', 'Cirugía Maxilofacial'],
+  horarios: datosHorarios(lang).map((h, i) => ({
+    ...h,
+    estado: i === 2 ? 'medio' : h.cerrado ? 'cerrado' : 'abierto',
+  })),
+  acceso: en
+    ? 'Exterior unit at Uniplaza, right next to Punto Farma. Watched parking, air-conditioned space and a direct access ramp.'
+    : 'Local exterior en Uniplaza, justo a un costado de Punto Farma. Estacionamiento vigilado, ambiente climatizado y rampa de acceso directo.',
+  whatsapp: '50496405308',
+  mapsUrl: 'https://maps.app.goo.gl/xhfUQVQTHY6B7ifc6',
+};
+---
+
+<section class="sedes shell" id="sedes" data-reveal-group>
+  <header class="sedes__cabecera" data-reveal>
+    <p class="sedes__kicker">{t.sedes.titulo}</p>
+    <h2>{en ? 'Our clinic' : 'Nuestra sede clínica'}</h2>
+    <p class="sedes__bajada">
+      {en
+        ? 'A practice with certified specialists, digital technology and parking for you.'
+        : 'Un consultorio con especialistas certificados, tecnología digital y parqueo para ti.'}
+    </p>
+  </header>
+
+  <div class="sedes__caja" data-reveal>
+    <figure class="sedes__fachada">
+      <Picture
+        src={fachada}
+        alt={en
+          ? 'Street view of the Orthodent clinic at Uniplaza, La Ceiba'
+          : 'Fachada exterior de la clínica Orthodent en Uniplaza, La Ceiba'}
+        widths={[640, 1024]}
+        sizes="(min-width: 72rem) 72rem, 100vw"
+        loading="lazy"
+        decoding="async"
+      />
+    </figure>
+
+    <div class="sedes__mapa">
+      {
+        token ? (
+          <>
+            <div
+              class="sedes__mapa-canvas"
+              data-mapa-canvas
+              data-token={token}
+              data-lng={sede.coords[0]}
+              data-lat={sede.coords[1]}
+              data-nombre={sede.titulo}
+              data-msj-carga={t.sedes.carga}
+              data-msj-error={t.sedes.errorMapa}
+              role="img"
+              aria-label={`${en ? 'Map of the Orthodent clinic at' : 'Mapa de la sede de Orthodent en'} ${sede.titulo}`}
+            />
+            <p class="sedes__mapa-estado" data-mapa-estado>{t.sedes.carga}</p>
+          </>
+        ) : (
+          <p class="sedes__sin-token">
+            {t.sedes.errorMapa}
+          </p>
+        )
+      }
+    </div>
+
+    <div class="sedes__panel">
+      <div class="sedes__identidad">
+        <h3>{sede.titulo}</h3>
+        <p class="sedes__zona">{sede.zona}</p>
+      </div>
+
+      <ul class="sedes__etiquetas">
+        {
+          sede.etiquetas.map((e, idx) => (
+            <li class:list={['sedes__etiqueta', idx === 0 && 'is-principal']}>{e}</li>
+          ))
+        }
+      </ul>
+
+      <div class="sedes__bloque">
+        <h4>{en ? 'Opening hours' : 'Horario de atención'}</h4>
+        <div class="sedes__horario">
+          {
+            sede.horarios.map((h) => (
+              <div class:list={['sedes__dia', `es-${h.estado}`]}>
+                <span class="sedes__dia-nombre">{h.dias}</span>
+                <span class="sedes__dia-rango">{h.rango}</span>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <div class="sedes__bloque">
+        <h4>{en ? 'Access and surroundings' : 'Accesibilidad y entorno'}</h4>
+        <p>{sede.acceso}</p>
+      </div>
+
+      <div class="sedes__acciones">
+        <a class="sedes__cta-principal" href={sede.mapsUrl} target="_blank" rel="noopener noreferrer">
+          <span>{t.sedes.comoLlegar}</span>
+        </a>
+        <a
+          class="sedes__cta-wa"
+          href={`https://wa.me/${sede.whatsapp}?text=${encodeURIComponent(
+            en
+              ? `Hi Orthodent, I would like information about the ${sede.titulo} location`
+              : `Hola Orthodent, deseo información sobre la sede ${sede.titulo}`,
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="sedes__cta-icono" set:html={whatsappSvg} />
+          <span>{t.agendar.whatsapp}</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .sedes {
+    padding-block: var(--section-y);
+  }
+
+  .sedes__cabecera {
+    max-width: 44rem;
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+  }
+
+  .sedes__kicker {
+    display: block;
+    margin-bottom: 0.75rem;
+    color: var(--slate-500);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .sedes__cabecera h2 {
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .sedes__bajada {
+    margin-top: 1rem;
+    color: var(--slate-600);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    max-width: var(--measure);
+  }
+
+  .sedes__caja {
+    display: grid;
+    gap: 1rem;
+  }
+
+  /* La fachada abre la tarjeta: se llega a la sede, se ve el local y debajo
+     quedan el mapa y los datos. Sin tope de alto, la foto a 1024px de ancho
+     se comeria la pantalla entera. */
+  .sedes__fachada {
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--r-panel);
+  }
+
+  .sedes__fachada :global(picture),
+  .sedes__fachada :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .sedes__fachada :global(img) {
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+  }
+
+  .sedes__mapa {
+    position: relative;
+    min-height: 22rem;
+    overflow: hidden;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--r-panel);
+    background: var(--surface);
+  }
+
+  .sedes__mapa-canvas {
+    position: absolute;
+    inset: 0;
+  }
+
+  .sedes__sin-token,
+  .sedes__mapa-estado {
+    display: grid;
+    place-content: center;
+    min-height: 22rem;
+    margin: 0;
+    padding: 2rem;
+    color: var(--slate-600);
+    font-size: 0.9375rem;
+    text-align: center;
+  }
+
+  /* El aviso de carga se retira cuando el mapa pinta su primer fotograma. */
+  .sedes__mapa-estado {
+    position: absolute;
+    inset: 0;
+  }
+
+  .sedes__panel {
+    display: grid;
+    gap: 1.5rem;
+    align-content: start;
+    padding: 1.25rem;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--r-panel);
+    background: var(--slate-100);
+  }
+
+  .sedes__identidad h3 {
+    font-size: clamp(1.25rem, 2.4vw, 1.5rem);
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+
+  .sedes__zona {
+    margin-top: 0.25rem;
+    color: var(--slate-600);
+    font-size: 0.9375rem;
+  }
+
+  .sedes__etiquetas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4375rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sedes__etiqueta {
+    padding: 0.3125rem 0.6875rem;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--r-pill);
+    background: var(--slate-100);
+    color: var(--slate-600);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .sedes__etiqueta.is-principal {
+    border-color: transparent;
+    background: var(--brand-soft);
+    color: var(--brand-strong);
+    font-weight: 600;
+  }
+
+  .sedes__bloque h4 {
+    margin-bottom: 0.625rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+
+  .sedes__bloque p {
+    color: var(--slate-600);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    max-width: 58ch;
+  }
+
+  /* Horario: una ficha por bloque de dias, todas del mismo tamano. Las fichas
+     van en blanco sobre el panel gris para que los dias se lean de un vistazo
+     en vez de una frase encadenada con guiones.
+
+     En movil van apiladas porque el rango "9:00 AM - 5:30 PM" no cabe a media
+     columna sin desbordarse; nowrap obliga a que el rango entre entero. */
+  .sedes__horario {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .sedes__dia {
+    display: grid;
+    gap: 0.1875rem;
+    align-content: start;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--r-control);
+    background: #fff;
+  }
+
+  .sedes__dia-nombre {
+    color: var(--slate-600);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .sedes__dia-rango {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    /* Cifras de ancho fijo: las horas quedan alineadas en columna. */
+    font-variant-numeric: tabular-nums;
+    /* El guion de "9:00 AM - 5:30 PM" es un punto de corte de linea, y eso
+       dejaba el PM colgando en un segundo renglon. nowrap mantiene el rango
+       entero en una sola linea. */
+    white-space: nowrap;
+  }
+
+  /* Sabado: jornada corta, se marca con el color de marca en vez de con color. */
+  .sedes__dia.es-medio {
+    border-color: transparent;
+    background: var(--brand-soft);
+  }
+
+  .sedes__dia.es-medio .sedes__dia-rango {
+    color: var(--brand-strong);
+  }
+
+  /* Domingo: borde punteado y texto atenuado, se lee como dia sin atencion. */
+  .sedes__dia.es-cerrado {
+    border-style: dashed;
+  }
+
+  .sedes__dia.es-cerrado .sedes__dia-rango {
+    color: var(--slate-500);
+    font-weight: 600;
+  }
+
+  .sedes__acciones {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .sedes__acciones a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8125rem 1rem;
+    border-radius: var(--r-control);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    text-align: center;
+    transition:
+      background-color var(--dur-base) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+
+  .sedes__cta-icono {
+    display: grid;
+    place-items: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    flex: none;
+  }
+
+  .sedes__cta-icono :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .sedes__acciones a:active {
+    transform: scale(0.985);
+  }
+
+  .sedes__cta-principal {
+    background: var(--brand);
+    color: #fff;
+    box-shadow: var(--shadow-md);
+  }
+
+  .sedes__cta-principal:hover {
+    background: var(--brand-strong);
+  }
+
+  .sedes__cta-wa {
+    border: 1px solid var(--slate-200);
+    background: var(--slate-100);
+    color: var(--brand-strong);
+  }
+
+  .sedes__cta-wa:hover {
+    background: var(--slate-200);
+  }
+
+  /* Movil: la card de sede es la que importa, no el mapa. Se aprietan los
+     espacios y las fichas de horario van en dos columnas, que a 375px
+     deja ver de un vistazo los cuatro bloques sin scroll largo. */
+  @media (max-width: 39.999rem) {
+    .sedes__panel {
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .sedes__identidad h3 {
+      font-size: 1.125rem;
+    }
+
+    .sedes__zona {
+      font-size: 0.8125rem;
+    }
+
+    .sedes__etiqueta {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.6875rem;
+    }
+
+    .sedes__bloque h4 {
+      margin-bottom: 0.375rem;
+      font-size: 0.8125rem;
+    }
+
+    .sedes__bloque p {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+    }
+
+    .sedes__horario {
+      gap: 0.375rem;
+    }
+
+    .sedes__dia {
+      padding: 0.5rem 0.625rem;
+    }
+
+    .sedes__dia-nombre {
+      font-size: 0.75rem;
+    }
+
+    .sedes__dia-rango {
+      font-size: 0.8125rem;
+    }
+
+    .sedes__acciones a {
+      padding: 0.6875rem 0.75rem;
+      font-size: 0.8125rem;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    /* Escritorio: la fachada abre la pieza y debajo el mapa y el panel se
+       juntan sin separacion ni radios enfrentados. El alto lo marca el panel y
+       el mapa se estira. */
+    .sedes__caja {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 0;
+    }
+
+    /* La foto cruza las dos columnas: es la portada de la tarjeta. */
+    .sedes__fachada {
+      grid-column: 1 / -1;
+      border-bottom: 0;
+      border-radius: var(--r-panel) var(--r-panel) 0 0;
+    }
+
+    /* Mas apaisada en escritorio para que no empuje el mapa fuera del
+       primer pantallazo. */
+    .sedes__fachada :global(img) {
+      aspect-ratio: 21 / 9;
+    }
+
+    .sedes__mapa {
+      min-height: 34rem;
+      border-top: 0;
+      border-right: 0;
+      border-radius: 0 0 0 var(--r-panel);
+    }
+
+    .sedes__sin-token,
+    .sedes__mapa-estado {
+      min-height: 34rem;
+    }
+
+    .sedes__panel {
+      gap: 1.75rem;
+      padding: 2rem;
+      border-top: 0;
+      border-left: 0;
+      border-radius: 0 0 var(--r-panel) 0;
+    }
+
+    /* El panel es mas ancho en escritorio, asi que las fichas pasan a cuatro
+       columnas en una sola fila. */
+    .sedes__horario {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sedes__acciones a {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  import 'mapbox-gl/dist/mapbox-gl.css';
+
+  const lienzo = document.querySelector('[data-mapa-canvas]');
+  const aviso = document.querySelector('[data-mapa-estado]');
+
+  /* Los textos que arma el script se leen de data-attributes: el bundle es el
+     mismo para los dos idiomas y no puede cerrarse sobre el diccionario. */
+  const mensajeCarga = lienzo?.getAttribute('data-msj-carga');
+  const mensajeError = lienzo?.getAttribute('data-msj-error') ?? mensajeCarga;
+
+  // Los datos viajan en data-* para que Astro pueda empaquetar este script como
+  // modulo. Con define:vars los import quedaban dentro de una funcion y el
+  // modulo entero fallaba por sintaxis, dejando el mapa en blanco.
+  if (lienzo) {
+    const token = lienzo.dataset.token;
+    const lng = Number(lienzo.dataset.lng);
+    const lat = Number(lienzo.dataset.lat);
+    const nombre = lienzo.dataset.nombre ?? '';
+
+    const mostrarAviso = (texto) => {
+      if (!aviso) return;
+      aviso.textContent = texto;
+      aviso.hidden = false;
+    };
+
+    /* Mapbox no lanza excepcion cuando el token es invalido o el dominio no
+       esta autorizado: solo emite `error`. Ademas emite `error` tambien por
+       tiles sueltos que fallan (un glifo, un sprite, una tesela en 404), y antes
+       de separar los casos cualquier fallo de una tesela reemplazaba el mapa
+       entero por el mensaje de error. Aqui solo se muestra el aviso cuando el
+       error es de autenticacion o de conexion, que son los unicos que
+       impiden que el mapa aparezca. */
+    const esErrorFatal = (evento) => {
+      const error = evento?.error;
+      if (!error) return false;
+
+      const estado = error.status ?? evento.status;
+      const texto = `${error.message ?? ''} ${error?.statusText ?? ''}`.toLowerCase();
+
+      // 401 y 403: token invalido, expirado o sin este dominio en la lista de
+      // URLs autorizadas del panel de Mapbox.
+      if (estado === 401 || estado === 403) return true;
+      if (texto.includes('unauthorized') || texto.includes('access token')) return true;
+
+      // Sin respuesta del servidor: DNS, TLS, CSP o red bloqueada.
+      if (estado === 0 || texto.includes('failed to fetch') || texto.includes('network')) return true;
+
+      return false;
+    };
+
+    const describirError = (evento) => {
+      const estado = evento?.error?.status ?? evento?.status;
+      return estado ? `Mapbox ${estado}` : 'Mapbox';
+    };
+
+    async function montarMapa() {
+      // mapbox-gl pesa casi 2 MB: se trae dinamicamente para no penalizar la
+      // carga inicial de una seccion que esta al final de la pagina.
+      const { default: mapboxgl } = await import('mapbox-gl');
+      mapboxgl.accessToken = token;
+
+      const mapa = new mapboxgl.Map({
+        container: lienzo,
+        style: 'mapbox://styles/mapbox/streets-v12',
+
+        // El mapa abre justo sobre la manzana de Uniplaza en vez de un zoom
+        // suelto: `bounds` encuadra la zona y `padding` deja aire alrededor.
+        bounds: [
+          [lng - 0.008, lat - 0.005],
+          [lng + 0.008, lat + 0.005],
+        ],
+        fitBoundsOptions: { padding: 56 },
+
+        // Sin maxBounds se puede arrastrar hasta los cinco continentes y se
+        // descargan tiles de todo el mundo. Se acota al entorno de la sede y se
+        // corta la repeticion del globo al cruzar el borde del mundo.
+        maxBounds: [
+          [lng - 0.03, lat - 0.02],
+          [lng + 0.03, lat + 0.02],
+        ],
+        minZoom: 13,
+        maxZoom: 17,
+        renderWorldCopies: false,
+
+        attributionControl: false,
+        cooperativeGestures: true,
+      });
+
+      mapa.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left');
+      mapa.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
+
+      // El pin es un punto, no una etiqueta: el nombre ya lo da el panel de al
+      // lado y sobre el mapa solo interesa el punto. Es un button real para que
+      // sea alcanzable con teclado.
+      const pin = document.createElement('button');
+      pin.type = 'button';
+      pin.className = 'sede-pin';
+      pin.setAttribute('aria-label', `${nombre}. Acercar el mapa a la sede.`);
+      pin.innerHTML = '<span class="sede-pin__nucleo" aria-hidden="true"></span>';
+
+      const marcador = new mapboxgl.Marker({ element: pin, anchor: 'center' })
+        .setLngLat([lng, lat])
+        .addTo(mapa);
+
+      pin.addEventListener('click', () => {
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        mapa.easeTo({ center: [lng, lat], zoom: 16, duration: reduce ? 0 : 350 });
+        marcador.getElement().focus();
+      });
+
+      let listo = false;
+
+      mapa.on('load', () => {
+        listo = true;
+        aviso?.remove();
+      });
+
+      mapa.on('error', (evento) => {
+        // Se loguea siempre, incluso lo no fatal: en produccion el unico
+        // registro de por que no cargo el mapa es la consola.
+        console.warn(`[sedes] error de Mapbox:`, evento?.error ?? evento);
+
+        if (!esErrorFatal(evento)) return;
+        if (listo) return;
+
+        mostrarAviso(`${mensajeError} (${describirError(evento)})`);
+      });
+
+      /* Si el estilo nunca carga, `load` no se dispara y el aviso se queda en
+         "cargando" para siempre, que es el peor estado posible: parece una
+         pagina colgada en vez de un fallo. A los 12 segundos se declara el
+         fallo y se muestra el mensaje con la causa probable. */
+      setTimeout(() => {
+        if (listo) return;
+        mostrarAviso(`${mensajeError} (tiempo de espera agotado)`);
+      }, 12000);
+    }
+
+    if (token && Number.isFinite(lng) && Number.isFinite(lat)) {
+      if ('IntersectionObserver' in window) {
+        const observador = new IntersectionObserver(
+          (entradas) => {
+            if (!entradas.some((e) => e.isIntersecting)) return;
+            observador.disconnect();
+            montarMapa().catch((error) => {
+              console.warn('[sedes] no se pudo montar el mapa:', error);
+              mostrarAviso(mensajeError);
+            });
+          },
+          { rootMargin: '400px 0px' },
+        );
+        observador.observe(lienzo);
+      } else {
+        montarMapa().catch((error) => {
+          console.warn('[sedes] no se pudo montar el mapa:', error);
+          mostrarAviso(mensajeError);
+        });
+      }
+    } else {
+      /* Sin token no es un fallo de red sino de despliegue: el build corrio
+         sin PUBLIC_MAPBOX_TOKEN en el entorno. El mensaje lo dice, porque es la
+         causa mas comun y no se puede deducir de "el mapa no carga". */
+      console.warn('[sedes] PUBLIC_MAPBOX_TOKEN vacio en el build.');
+      mostrarAviso(token ? mensajeError : `${mensajeError} (falta PUBLIC_MAPBOX_TOKEN)`);
+    }
+  }
+</script>
+
+<style is:global>
+  /* Pin: circulo solido con halo. El halo es la parte pulsante, no el punto,
+     asi el centro queda nitido sobre el mapa. */
+  .sede-pin {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .sede-pin__nucleo {
+    position: relative;
+    width: 1.125rem;
+    height: 1.125rem;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--brand);
+    box-shadow: var(--shadow-md);
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  .sede-pin__nucleo::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: var(--brand);
+    opacity: 0.22;
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  .sede-pin:hover .sede-pin__nucleo {
+    transform: scale(1.15);
+  }
+
+  .sede-pin:focus-visible {
+    outline: 2px solid var(--brand-strong);
+    outline-offset: 4px;
+  }
+
+  .mapboxgl-ctrl-group {
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+  }
+
+  .mapboxgl-ctrl-attrib {
+    font-size: 10px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sede-pin__nucleo,
+    .sede-pin__nucleo::after {
+      transition: none;
+    }
+  }
+</style>

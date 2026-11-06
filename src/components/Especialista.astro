@@ -1,0 +1,246 @@
+---
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+// El PNG original tiene fondo transparente (alpha 0 en las esquinas), y sobre el
+// fondo de pagina se leia como un rectangulo blanco. La version "plana" esta
+// aplanada sobre #f8f9fe, que es el mismo --bg del sitio, asi que el recorte
+// se funde con la seccion sin borde visible.
+import foto from '../assets/images/karen-chinchilla-plana.png';
+
+import { textos } from '../i18n';
+import { datosEnfoques } from '../i18n/listados';
+
+const lang = Astro.currentLocale ?? 'es';
+const t = textos(lang);
+const enfoques = datosEnfoques(lang);
+---
+
+<section class="dra shell" id="especialista" data-reveal-group>
+  <div class="dra__caja" data-reveal>
+    <div class="dra__texto">
+<p class="dra__kicker">{t.especialista.kicker}</p>
+      <h2>{t.especialista.titulo}</h2>
+      <p class="dra__especialidad">{t.especialista.especialidad}</p>
+
+      <p class="dra__bio">
+        {t.especialista.bio}
+      </p>
+
+      <h3 class="dra__subtitulo">{t.especialista.enfoqueTitulo}</h3>
+      <ul class="dra__enfoques">
+        {
+          enfoques.map((e) => (
+            <li>
+              <Icon name={e.icon} size={22} />
+              <div>
+                <p class="dra__enfoque-titulo">{e.titulo}</p>
+                <p class="dra__enfoque-desc">{e.desc}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <Image
+      class="dra__foto"
+      src={foto}
+      alt={lang === 'en'
+        ? 'Dr. Karen Chinchilla, specialist in orthodontics and maxillofacial orthopaedics'
+        : 'Dra. Karen Chinchilla, especialista en ortodoncia y ortopedia maxilofacial'}
+      width={1121}
+      height={1403}
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+</section>
+
+<style>
+  .dra {
+    padding-block: var(--section-y);
+  }
+
+/* Dos columnas en todos los tamanos, no solo en escritorio: el reparto es
+     minmax(0, 1fr) para que la foto y el texto pesen igual. A 375px cada
+     columna queda cerca de 170px, por eso la tipografia y los espaciados se
+     reducen por debajo de 64rem; con los valores de escritorio el texto se
+     desborda. */
+  .dra__caja {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .dra__kicker {
+    display: block;
+    margin-bottom: 0.75rem;
+    color: var(--slate-500);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+.dra__texto h2 {
+    color: var(--ink);
+    font-size: clamp(1.375rem, 2.4vw, 1.875rem);
+    line-height: 1.14;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .dra__especialidad {
+    margin-top: 0.5rem;
+    color: var(--brand-strong);
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  .dra__bio {
+    margin-top: 1rem;
+    color: var(--slate-600);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    max-width: var(--measure);
+  }
+
+  .dra__subtitulo {
+    margin-top: 1.625rem;
+    margin-bottom: 0.875rem;
+    color: var(--ink);
+    font-size: 1rem;
+  }
+
+  /* Los enfoques van como lista con icono, no como cards: el texto es corto y
+     las cajas anidadas solo agregan ruido visual. */
+  .dra__enfoques {
+    display: grid;
+    gap: 1.125rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .dra__enfoques li {
+    display: flex;
+    gap: 0.875rem;
+    align-items: flex-start;
+  }
+
+  .dra__enfoques :global(svg) {
+    flex: none;
+    margin-top: 2px;
+    color: var(--brand);
+  }
+
+.dra__enfoque-titulo {
+    color: var(--ink);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .dra__enfoque-desc {
+    margin-top: 0.1875rem;
+    color: var(--slate-600);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    max-width: 46ch;
+  }
+
+
+  /* La foto va sola, sin marco ni contenedor: el recorte lo hace object-fit
+     sobre el ratio 4/5 del archivo real (1121x1403), para que no se deforme. */
+  .dra__foto {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    aspect-ratio: 4 / 5;
+  }
+
+/* Por debajo de 64rem la columna de texto mide ~170px, asi que se compacta la
+     tipografia. Los 22px de icono con su hueco de 14px se comian un tercio
+     del ancho disponible. */
+  @media (max-width: 64rem) {
+    /* El texto es largo y la columna angosta: sin esto la foto queda en 4/5
+       (~212px) y el texto en ~600px, o sea un 50/50 que no existe. Estirando
+       la imagen hasta la altura de la fila, las dos columnas emparejan. */
+    .dra__caja {
+      gap: 1.125rem;
+      align-items: stretch;
+    }
+
+    .dra__texto {
+      min-width: 0;
+    }
+
+    .dra__kicker {
+      margin-bottom: 0.5rem;
+      font-size: 0.625rem;
+      letter-spacing: 0.1em;
+    }
+
+    .dra__texto h2 {
+      font-size: clamp(1.0625rem, 3.6vw, 1.25rem);
+    }
+
+    .dra__especialidad {
+      margin-top: 0.3125rem;
+      font-size: 0.75rem;
+    }
+
+    .dra__bio {
+      margin-top: 0.625rem;
+      font-size: 0.6875rem;
+      line-height: 1.55;
+    }
+
+    .dra__subtitulo {
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8125rem;
+    }
+
+    .dra__enfoques {
+      gap: 0.875rem;
+    }
+
+    /* El icono se mantiene al costado del titulo, en el mismo renglon: separado
+       gastaba una linea entera por cada enfoque en una columna de ~170px. El
+       gap y el tamano del icono bajan para que el titulo no se apriete. */
+    .dra__enfoques li {
+      display: flex;
+      gap: 0.4375rem;
+      align-items: flex-start;
+    }
+
+    .dra__enfoques :global(svg) {
+      width: 13px;
+      height: 13px;
+      margin-top: 1px;
+    }
+
+    .dra__enfoque-titulo {
+      font-size: 0.6875rem;
+      line-height: 1.3;
+    }
+
+    .dra__enfoque-desc {
+      margin-top: 0.125rem;
+      font-size: 0.625rem;
+      line-height: 1.5;
+    }
+
+    /* La foto se estira a la altura del texto con object-fit: cover. El recorte
+       4/5 ya no aplica porque la fila la define el texto. */
+    .dra__foto {
+      height: 100%;
+      min-height: 100%;
+      aspect-ratio: auto;
+      object-fit: cover;
+    }
+  }
+</style>

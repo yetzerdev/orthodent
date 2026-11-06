@@ -1,0 +1,536 @@
+---
+import Icon from './Icon.astro';
+import { textos } from '../i18n';
+
+interface Testimonio {
+  nombre: string;
+  cita: string;
+  nota: number;
+}
+
+const lang = Astro.currentLocale ?? 'es';
+const t = textos(lang);
+
+/* Las citas NO se traducen: son textuales de pacientes y su voz es el contenido.
+   Solo cambian los rotulos de la interfaz. */
+const testimonios: Testimonio[] = [
+  {
+    nombre: 'Esther Medina Almendarez',
+    nota: 5,
+    cita:
+      'Excelente atención y un trato muy profesional. La doctora es muy amable, explica todo con claridad y realiza un trabajo de excelente calidad. ¡La recomiendo totalmente!',
+  },
+  {
+    nombre: 'Jose Lagos',
+    nota: 5,
+    cita:
+      'La Doctora buena onda y súper profesional, el espacio inspirador, buenisima en estética Dental, feliz con los resultados!',
+  },
+  {
+    nombre: 'Katia Mejia',
+    nota: 5,
+    cita:
+      'La mejor clínica y Dra. en la ciudad de La Ceiba, con tecnología de primera, equipo y personal totalmente especializado. Totalmente siempre será mi clínica segura para mí y mi familia.',
+  },
+  {
+    nombre: 'Lisbeth Cabaña',
+    nota: 5,
+    cita:
+      'Desde que entré a la clínica me sentí en buenas manos. La doctora tiene un trato amable, instalaciones limpias y modernas, y su trabajo es impecable. Sin duda seguiré viniendo. Full Recomendado 👌👌 Gracias!',
+  },
+  {
+    nombre: 'Alvania Avila',
+    nota: 5,
+    cita: 'Excelente trabajos dentales super recomendados 100%',
+  },
+  {
+    nombre: 'Klaisha Down',
+    nota: 5,
+    cita: 'Amé el service 10/10 todo en orden, y su servicio al cliente es maravilloso ❤️‍🩹',
+  },
+  {
+    nombre: 'Angie Ruiz',
+    nota: 5,
+    cita:
+      'Mi experiencia en Clínica Orthodent ha sido excelente, desde el primer momento recibí una atención muy amable y profesional. Me gusta mucho que cuentan con tecnología moderna para realizar los diagnósticos y que explican cada proceso de una manera clara.\n\nAdemás, el ambiente es muy agradable y el personal transmite mucha confianza. Sin duda, recomiendo Clínica Orthodent a quienes estén buscando un lugar donde cuidar su sonrisa y recibir una atención de calidad.',
+  },
+  {
+    nombre: 'Gryseli Alvarado',
+    nota: 5,
+    cita: '🙌😊Excelente y calidad en trabajos dentales 🥰',
+  },
+];
+---
+
+<section
+  class="section shell testi"
+  id="testimonios"
+  aria-labelledby="testi-titulo"
+  data-etiqueta-pagina={lang === 'en' ? 'Go to page' : 'Ir a la página'}
+  data-etiqueta-total={lang === 'en' ? 'testimonials' : 'testimonios'}
+>
+  <div class="testi__cabecera" data-reveal>
+    <span class="testi__kicker">{t.testimonios.kicker}</span>
+    <h2 id="testi-titulo">{t.testimonios.titulo}</h2>
+  </div>
+
+  <div class="testi__marco" data-reveal>
+    <ul
+      class="testi__pista"
+      data-pista
+      tabindex="0"
+      aria-label={lang === 'en' ? 'Patient testimonials' : 'Testimonios de pacientes'}
+    >
+      {
+        testimonios.map((testimonio) => (
+          <li class="testi__card">
+            <Icon name="quote" size={24} class="testi__comilla" />
+            <p class="testi__cita">{testimonio.cita}</p>
+            <footer class="testi__ficha">
+              <span class="testi__inicial" aria-hidden="true">{testimonio.nombre.charAt(0)}</span>
+              <span class="testi__datos">
+                <span class="testi__nombre">{testimonio.nombre}</span>
+                <span
+                  class="testi__estrellas"
+                  role="img"
+                  aria-label={lang === 'en'
+                    ? `${testimonio.nota} out of 5 stars`
+                    : `${testimonio.nota} de 5 estrellas`}
+                >
+                  {Array.from({ length: testimonio.nota }, () => (
+<Icon name="star" size={14} />
+                    ))}
+                </span>
+              </span>
+            </footer>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <!-- Los controles los rellena el script: cuantos puntos existen depende de
+       cuantas tarjetas caben a la vez, que cambia con el ancho. Se ocultan
+       mientras no haya JS para no dejar botones muertos. -->
+  <div class="testi__controles" data-controles hidden>
+    <button
+      class="testi__boton"
+      type="button"
+      data-prev
+      aria-label={lang === 'en' ? 'Previous testimonials' : 'Testimonios anteriores'}
+    >
+      <Icon name="arrow-left-01" size={16} />
+    </button>
+
+    <ul class="testi__puntos" data-puntos></ul>
+
+    <button
+      class="testi__boton"
+      type="button"
+      data-next
+      aria-label={lang === 'en' ? 'More testimonials' : 'Más testimonios'}
+    >
+      <Icon name="arrow-right-01" size={16} />
+    </button>
+  </div>
+</section>
+
+<style>
+  .testi__cabecera {
+    max-width: 34rem;
+    margin-inline: auto;
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+
+  .testi__kicker {
+    display: block;
+    margin-bottom: 0.75rem;
+    color: var(--slate-500);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .testi__cabecera h2 {
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  /* El marco recorta el desbordamiento; la pista es la que se desplaza. */
+  .testi__marco {
+    margin-inline: calc(var(--gutter) * -1);
+    overflow: hidden;
+  }
+
+  /* align-items: stretch mantiene todas las tarjetas a la misma altura: en un
+     carrusel, unas tarjetas de alturas distintas se ven descuadradas. El alto lo fija
+     la cita mas larga, asi que el ajuste se hace con tipografia y padding. */
+  .testi__pista {
+    display: flex;
+    align-items: stretch;
+    gap: 1rem;
+    padding-inline: var(--gutter);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    scrollbar-width: none;
+  }
+
+  .testi__pista::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Las citas van tal cual las escribieron los pacientes: no se recortan ni se
+     resumem. Para que la seccion no crezca desmedido en movil, lo que se ajusta
+     es el cromado: padding, holguras y tipografia. */
+  .testi__card {
+    display: flex;
+    flex: 0 0 86%;
+    flex-direction: column;
+    padding: 1.25rem;
+    border: 1px solid var(--slate-100);
+    border-radius: var(--r-card);
+    background: var(--slate-100);
+    scroll-snap-align: start;
+  }
+
+  .testi__comilla {
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-bottom: 0.625rem;
+    color: var(--slate-300);
+  }
+
+  /* La cita es el contenido principal: 16px en movil y 19px en escritorio. */
+  .testi__cita {
+    flex: 1;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: -0.006em;
+    color: var(--ink);
+    text-wrap: pretty;
+    margin-bottom: 1.25rem;
+  }
+
+  .testi__ficha {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--slate-200);
+  }
+
+  .testi__inicial {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--r-pill);
+    background: var(--brand);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .testi__datos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .testi__nombre {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .testi__estrellas {
+    display: flex;
+    gap: 1px;
+    color: var(--brand);
+  }
+
+  .testi__controles {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .testi__boton {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--r-pill);
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      color var(--dur-base) var(--ease-out),
+      opacity var(--dur-base) var(--ease-out);
+  }
+
+  .testi__boton[disabled] {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  /* Los puntos se crean con document.createElement, asi que Astro nunca les
+     asigna el atributo de scope y el CSS con scope no los alcanzaria: se
+     verian como botones negros del navegador. Por eso van en :global(). */
+  :global(.testi__puntos) {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  :global(.testi__puntos > li) {
+    display: flex;
+    align-items: center;
+  }
+
+  /* Cambia solo el ancho horizontal: la altura y el eje vertical se mantienen
+     para que la pila no se descentre al cambiar de estado. */
+  :global(.testi__punto) {
+    display: block;
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: var(--slate-300);
+    appearance: none;
+    cursor: pointer;
+    transition:
+      width var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+
+  :global(.testi__punto[aria-current='true']) {
+    width: 1.25rem;
+    background: var(--brand);
+  }
+
+  :global(.testi__punto[disabled]) {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .testi__boton:not([disabled]):hover {
+      border-color: var(--slate-400);
+    }
+
+    :global(.testi__punto:hover:not([disabled])) {
+      background: var(--slate-400);
+    }
+
+    :global(.testi__punto[aria-current='true']:hover) {
+      background: var(--brand);
+    }
+  }
+
+  @media (min-width: 40rem) {
+    .testi__card {
+      flex-basis: calc((100% - 1rem) / 2);
+      padding: 1.75rem;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .testi__card {
+      flex-basis: calc((100% - 2rem) / 3);
+    }
+
+    .testi__cabecera {
+      margin-bottom: 3.5rem;
+    }
+
+    /* La cita sube a 19px en escritorio: con 3 columnas la tarjeta es mas
+       ancha y el texto mas pequeno se pierde. */
+    .testi__cita {
+      font-size: 1.1875rem;
+      line-height: 1.45;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .testi__pista {
+      scroll-behavior: auto;
+    }
+
+    .testi__boton,
+    :global(.testi__punto) {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  /* Carrusel sobre scroll-snap nativo. Avanza de pagina en pagina (1 por card
+     visible) para que con 3 columnas el salto sea de 3 en 3. */
+  const pista = document.querySelector<HTMLElement>('[data-pista]');
+  const anterior = document.querySelector<HTMLButtonElement>('[data-prev]');
+  const siguiente = document.querySelector<HTMLButtonElement>('[data-next]');
+  const contenedorPuntos = document.querySelector<HTMLElement>('[data-puntos]');
+  const controles = document.querySelector<HTMLElement>('[data-controles]');
+
+  if (pista && anterior && siguiente && contenedorPuntos && controles) {
+    controles.hidden = false;
+
+    const cartas = () => Array.from(pista.querySelectorAll<HTMLElement>('.testi__card'));
+
+    /* Cuantas caben a la vez. Se mide por los offsets reales de las tarjetas
+       en vez de por porcentaje, porque los anchos son fraccionarios y el
+       redondeo acumula error. */
+    const visibles = () => {
+      const lista = cartas();
+      if (lista.length < 2) return 1;
+
+      const paso = lista[1].offsetLeft - lista[0].offsetLeft;
+      if (paso <= 0) return 1;
+
+      /* El ancho util descuenta el padding lateral de la pista. */
+      const estilos = getComputedStyle(pista);
+      const util =
+        pista.clientWidth -
+        parseFloat(estilos.paddingLeft) -
+        parseFloat(estilos.paddingRight);
+
+      return Math.max(1, Math.floor((util + (paso - lista[0].offsetWidth)) / paso));
+    };
+
+    const totalPaginas = () => Math.max(1, Math.ceil(cartas().length / visibles()));
+
+    /* Posicion de scroll de cada pagina, ya recortada al final real.
+       La ultima pagina no tiene un grupo completo de tarjetas, asi que su
+       destino es el tope del recorrido: sin esto el destino caeria fuera de
+       cualquier punto de anclaje y el mandatory lo devolveria hacia atras. */
+    const posiciones = () => {
+      const lista = cartas();
+      if (!lista.length) return [0];
+
+      const grupo = visibles();
+      const estilos = getComputedStyle(pista);
+      const padIzq = parseFloat(estilos.paddingLeft) || 0;
+      const tope = pista.scrollWidth - pista.clientWidth;
+
+      const salida: number[] = [];
+      for (let p = 0; p < totalPaginas(); p++) {
+        const carta = lista[p * grupo];
+        if (!carta) break;
+        salida.push(Math.max(0, Math.min(carta.offsetLeft - padIzq, tope)));
+      }
+      return salida.length ? salida : [0];
+    };
+
+    /* Pagina actual: la cuyo destino esta mas cerca de la posicion real. */
+    const paginaActual = () => {
+      const ps = posiciones();
+      let mejor = 0;
+      let distancia = Infinity;
+
+      ps.forEach((pos, i) => {
+        const d = Math.abs(pista.scrollLeft - pos);
+        if (d < distancia) {
+          distancia = d;
+          mejor = i;
+        }
+      });
+
+      return mejor;
+    };
+
+    const actualizar = () => {
+      const p = paginaActual();
+      const tope = posiciones().length - 1;
+
+      anterior.toggleAttribute('disabled', p <= 0);
+      siguiente.toggleAttribute('disabled', p >= tope);
+
+      contenedorPuntos
+        .querySelectorAll<HTMLButtonElement>('.testi__punto')
+        .forEach((btn, n) => {
+          if (n === p) btn.setAttribute('aria-current', 'true');
+          else btn.removeAttribute('aria-current');
+        });
+    };
+
+    /* Se navega a las posiciones ya recortadas: cada pagina tiene un destino
+       valido, incluida la ultima. Asi el snap nunca tiene que corregir nada y
+       el salto cae exacto en un borde de tarjeta. */
+    const irAPagina = (p: number) => {
+      const destino = posiciones()[p];
+      if (destino === undefined) return;
+
+      const suave = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+      pista.scrollTo({ left: destino, behavior: suave ? 'smooth' : 'auto' });
+    };
+
+    /* Los rotulos de los puntos se leen de data-attributes: el script es el mismo
+       para los dos idiomas y no puede cerrarse sobre el diccionario. */
+    const seccion = document.querySelector('[data-etiqueta-pagina]');
+    const etiquetaPagina = seccion?.getAttribute('data-etiqueta-pagina') ?? 'Ir a la página';
+    const etiquetaTotal = seccion?.getAttribute('data-etiqueta-total') ?? 'testimonios';
+
+    const construirPuntos = () => {
+      contenedorPuntos.replaceChildren();
+      const ps = totalPaginas();
+
+      for (let i = 0; i < ps; i++) {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+
+        btn.type = 'button';
+        btn.className = 'testi__punto';
+        btn.setAttribute('aria-label', `${etiquetaPagina} ${i + 1} de ${ps} ${etiquetaTotal}`);
+        btn.addEventListener('click', () => irAPagina(i));
+
+        li.appendChild(btn);
+        contenedorPuntos.appendChild(li);
+      }
+    };
+
+    let raf = 0;
+    pista.addEventListener(
+      'scroll',
+      () => {
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(actualizar);
+      },
+      { passive: true },
+    );
+
+    anterior.addEventListener('click', () => irAPagina(paginaActual() - 1));
+    siguiente.addEventListener('click', () => irAPagina(paginaActual() + 1));
+
+    /* El ancho de tarjeta depende del viewport, asi que al re dimensionar hay
+       que rehacer los puntos: de 3 visibles a 1 cambia el numero de paginas. */
+    const ro = new ResizeObserver(() => {
+      construirPuntos();
+      actualizar();
+    });
+    ro.observe(pista);
+
+    construirPuntos();
+    actualizar();
+  }
+</script>

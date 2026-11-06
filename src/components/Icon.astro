@@ -1,0 +1,32 @@
+---
+import hugeicons from '@iconify-json/hugeicons/icons.json';
+
+interface Props {
+  /** Nombre del icono en HugeIcons, por ejemplo dental-tooth, clock-01. */
+  name: string;
+  size?: number;
+  class?: string;
+  /** Texto accesible. Si se omite, el icono se marca como decorativo. */
+  title?: string;
+}
+
+const { name, size = 20, class: className, title } = Astro.props;
+const icon = hugeicons.icons[name];
+
+if (!icon) {
+  throw new Error(`Icono hugeicons:${name} no existe en @iconify-json/hugeicons`);
+}
+---
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox={`0 0 ${hugeicons.width} ${hugeicons.height}`}
+  width={size}
+  height={size}
+  class={className}
+  role={title ? 'img' : undefined}
+  aria-hidden={title ? undefined : 'true'}
+  aria-label={title}
+  focusable="false"
+  set:html={icon.body}
+/>

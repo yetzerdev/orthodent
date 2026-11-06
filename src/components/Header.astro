@@ -1,0 +1,195 @@
+---
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import logo from '../assets/images/logo-orthodent.png';
+import { rutaAlterna, etiquetaIdioma } from '../i18n';
+
+const lang = Astro.currentLocale ?? 'es';
+const otro = lang === 'en' ? 'es' : 'en';
+const hrefIdioma = rutaAlterna(Astro.url.pathname, otro);
+const nombreIdioma = etiquetaIdioma[otro];
+
+interface Props {
+  /** Texto accesible del logotipo; el nombre visible ya va en la imagen. */
+  brand?: string;
+  /** Llamada a la accion principal. Se oculta en movil. */
+  cta?: { label: string; href: string };
+}
+
+const { brand = 'Orthodent', cta } = Astro.props;
+
+/* El logotipo es apaisado (1685x797). Hay que pasarle su proporcion real: con
+   un width y un height cuadrados Astro recorta la imagen y el arte pierde los
+   extremos, ademas de dejar un marco transparente enorme alrededor. */
+const LOGO_ALTO = 226;
+const LOGO_ANCHO = Math.round((logo.width / logo.height) * LOGO_ALTO);
+---
+
+<header class="site-header">
+  <div class="shell site-header__inner">
+    <a class="brand" href="#inicio">
+      <Image
+        class="brand__logo"
+        src={logo}
+        alt={brand}
+        width={LOGO_ANCHO}
+        height={LOGO_ALTO}
+        loading="eager"
+        decoding="async"
+      />
+    </a>
+
+    <div class="site-header__actions">
+      {/* Selector de idioma: mismo destino con el prefijo /en alternado. Se
+          muestra siempre, tambien en movil, donde sustituye al CTA. */}
+      <a
+        class="pill pill--info site-header__idioma"
+        href={hrefIdioma}
+        hreflang={otro}
+        aria-label={otro === 'en' ? 'Switch to English' : 'Cambiar a español'}
+      >
+        <Icon name="translate" size={15} class="pill__icon" />
+        <span class="site-header__idioma-nombre">{nombreIdioma}</span>
+      </a>
+
+      {
+        cta && (
+          <a class="pill pill--cta" href={cta.href}>
+            <Icon name="arrow-right-01" size={15} />
+            <span>{cta.label}</span>
+          </a>
+        )
+      }
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding-block: 1.125rem 0.75rem;
+  }
+
+  /* Al bajar, el header toma un fondo solido y una linea inferior: pasa de
+     velo transparente a barra fija. Solo se anima color y borde, nunca el
+     padding, para no desplazar el contenido que tiene debajo. La linea de
+     tiempo es el scroll del documento, asi que no hace falta ningun script. */
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .site-header {
+        animation: header-barra linear both;
+        animation-timeline: scroll(root);
+        animation-range: 3rem 12rem;
+      }
+    }
+  }
+
+  @keyframes header-barra {
+    to {
+      background-color: var(--bg);
+      box-shadow: 0 1px 0 var(--slate-100);
+    }
+  }
+
+  /* Velo degradado para que el contenido no se lea detras de las pastillas */
+  .site-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      to bottom,
+      var(--bg) 62%,
+      color-mix(in oklch, var(--bg) 0%, transparent)
+    );
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .site-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+  }
+
+  /* La altura la manda la barra: 44px en movil y 56px en escritorio. El ancho
+     va en auto para respetar la proporcion apaisada del logotipo. */
+  .brand__logo {
+    width: auto;
+    height: 2.75rem;
+  }
+
+  .pill__icon {
+    color: var(--slate-500);
+  }
+
+  .pill--info {
+    color: var(--slate-600);
+  }
+
+  /* El selector de idioma se ve siempre. En movil se queda con el nombre corto
+     (EN / ES) porque el nombre completo no cabe junto al logotipo, y el
+     aria-label lleva el texto largo para lectores de pantalla. */
+  .site-header__idioma-nombre {
+    display: none;
+  }
+
+  @media (min-width: 30rem) {
+    .site-header__idioma-nombre {
+      display: inline;
+    }
+  }
+
+  /* En movil el CTA ocupa mas ancho que el selector y compite con el
+     logotipo, asi que sale: la llamada a la accion sigue en el hero y en el
+     formulario de agenda. */
+  .pill--cta {
+    display: none;
+  }
+
+  @media (min-width: 64rem) {
+    .pill--cta {
+      display: inline-flex;
+    }
+  }
+
+  .pill--cta {
+    background: var(--brand);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .pill--cta:hover {
+    background: var(--brand-strong);
+  }
+
+  /* A 320 px el logotipo y el CTA compiten por el ancho */
+  @media (max-width: 26rem) {
+    .brand__logo {
+      height: 2.25rem;
+    }
+
+    .pill--cta {
+      padding-inline: 0.75rem;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .brand__logo {
+      height: 3.5rem;
+    }
+  }
+</style>

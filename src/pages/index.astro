@@ -1,0 +1,12 @@
+---
+/**
+ * La home. Solo delega en el layout, que es donde vive el copy por idioma.
+ *
+ * Se separa del layout para que / y /en compartan exactamente el mismo
+ * marcado: cualquier cambio visual se hace una vez en Home.astro y aplica a
+ * los dos idiomas.
+ */
+import Home from '../layouts/Home.astro';
+---
+
+<Home />

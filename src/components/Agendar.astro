@@ -1,0 +1,543 @@
+---
+import Icon from './Icon.astro';
+import whatsappIcon from '../assets/whatsapp-svgrepo-com.svg?raw';
+import { textos } from '../i18n';
+import { datosEspecialidadesFormulario } from '../i18n/listados';
+
+const lang = Astro.currentLocale ?? 'es';
+const t = textos(lang);
+
+const telefono = '+50496405308';
+const whatsapp = '50496405308';
+
+// Mismo tratamiento que en Sedes: se recorta la cabecera XML del SVG y el fill
+// negro pasa a currentColor para que el icono tome el color del enlace.
+// Ademas se quita el <title> interno: el enlace ya tiene texto visible y el
+// titulo duplicado aparecia suelto dentro del <a>.
+const whatsappSvg = whatsappIcon
+  .slice(whatsappIcon.indexOf('<svg'))
+  .replace(/<title>.*?<\/title>/s, '')
+  .replace('fill="#000000"', 'fill="currentColor"');
+
+const especialidades = datosEspecialidadesFormulario(lang);
+
+const ventajas = lang === 'en'
+  ? ['Uniplaza location, La Ceiba', 'Digital technology and minimally invasive care']
+  : ['Sede en Uniplaza, La Ceiba', 'Tecnología digital y mínima invasión'];
+---
+
+<section class="agenda shell" id="agendar" data-reveal-group>
+  <div class="agenda__caja" data-reveal>
+    <div class="agenda__panel">
+      <p class="agenda__estado">
+        <span class="agenda__punto" aria-hidden="true"></span>
+        {t.agendar.estado}
+      </p>
+
+      <h2>{t.agendar.titulo}</h2>
+
+      <p class="agenda__bajada">
+        {t.agendar.bajada}
+      </p>
+
+      <ul class="agenda__ventajas">
+        {
+          ventajas.map((v) => (
+            <li>
+              <Icon name="tick-01" size={18} />
+              <span>{v}</span>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div class="agenda__directo">
+        <p>{t.agendar.directo}</p>
+        <div class="agenda__directo-enlaces">
+          <a class="agenda__directo-enlace" href={`tel:${telefono}`}>
+            <Icon name="call" size={18} />
+            <span>{t.agendar.llamar}</span>
+          </a>
+          <a class="agenda__directo-enlace" href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener noreferrer">
+            <span class="agenda__directo-icono" set:html={whatsappSvg} />
+            <span>WhatsApp</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="agenda__formulario">
+      <h3>{t.agendar.formTitulo}</h3>
+      <p class="agenda__form-nota">
+        {t.agendar.formNota}
+      </p>
+
+      {/* El sitio es estatico y no hay backend: en vez de un alert() que no
+          hace nada, el envio arma el mensaje de WhatsApp con los datos que
+          ingreso la persona y abre el chat. Es lo que el texto promete. */}
+      <form
+        class="agenda__campos"
+        data-agenda-form
+        data-msj-salto={t.agendar.waSaludo}
+        data-msj-nombre={t.agendar.waNombre}
+        data-msj-especialidad={t.agendar.waEspecialidad}
+        data-msj-sede={t.agendar.waSede}
+        data-msj-motivo={t.agendar.waMotivo}
+      >
+        <div class="agenda__campo">
+          <label for="agenda-nombre">{t.agendar.nombre}</label>
+          <input
+            id="agenda-nombre"
+            name="nombre"
+            type="text"
+            placeholder={t.agendar.nombrePlaceholder}
+            autocomplete="name"
+            required
+          />
+        </div>
+
+        <div class="agenda__campo">
+          <label for="agenda-whatsapp">{t.agendar.whatsappCampo}</label>
+          <input
+            id="agenda-whatsapp"
+            name="whatsapp"
+            type="tel"
+            placeholder="+504 0000-0000"
+            autocomplete="tel"
+            inputmode="tel"
+            required
+          />
+        </div>
+
+        <div class="agenda__campo">
+          <label for="agenda-especialidad">{t.agendar.especialidad}</label>
+          <select id="agenda-especialidad" name="especialidad" required>
+            <option value="" selected disabled>{t.agendar.seleccionar}</option>
+            {especialidades.map((e) => <option value={e}>{e}</option>)}
+          </select>
+        </div>
+
+        <div class="agenda__campo">
+          <label for="agenda-nota">{t.agendar.mensaje} <span class="agenda__opcional">{t.agendar.opcional}</span></label>
+          <textarea id="agenda-nota" name="nota" rows="2" placeholder={t.agendar.mensajePlaceholder}></textarea>
+        </div>
+
+        <button class="agenda__enviar" type="submit">
+          {t.agendar.enviar}
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<style>
+  .agenda {
+    padding-block: var(--section-y);
+  }
+
+  /* Panel oscuro que contrasta con el resto de la pagina clara. El degrade
+     vive en el fondo del bloque, no en el texto. */
+  .agenda__caja {
+    position: relative;
+    display: grid;
+    gap: 2rem;
+    overflow: hidden;
+    padding: 1.5rem;
+    border-radius: var(--r-media);
+    background: var(--ink);
+    color: #fff;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .agenda__caja::before {
+    content: '';
+    position: absolute;
+    inset: auto auto -30% -15%;
+    width: 22rem;
+    height: 22rem;
+    border-radius: 50%;
+    background: var(--brand);
+    opacity: 0.32;
+    filter: blur(72px);
+    pointer-events: none;
+  }
+
+  .agenda__panel,
+  .agenda__formulario {
+    position: relative;
+    min-width: 0;
+  }
+
+  .agenda__estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--r-pill);
+    background: rgb(255 255 255 / 0.08);
+    color: #d5ccff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .agenda__punto {
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 50%;
+    background: var(--brand);
+    flex: none;
+  }
+
+  .agenda__panel h2 {
+    /* clamp con techo en 2.5rem: es un h2 de seccion, no un display de
+       portada. El balance evita lineas muy desiguales. */
+    font-size: clamp(1.5rem, 3.4vw, 2.5rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .agenda__bajada {
+    margin-top: 1rem;
+    color: var(--slate-300);
+    font-size: 1rem;
+    line-height: 1.65;
+    max-width: 52ch;
+  }
+
+  .agenda__ventajas {
+    display: grid;
+    gap: 0.625rem;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .agenda__ventajas li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--slate-300);
+    font-size: 0.9375rem;
+  }
+
+  .agenda__ventajas :global(svg) {
+    color: #b6aaff;
+    flex: none;
+  }
+
+  .agenda__directo {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgb(255 255 255 / 0.1);
+  }
+
+  .agenda__directo p {
+    color: var(--slate-400);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .agenda__directo-enlaces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    margin-top: 0.75rem;
+  }
+
+  .agenda__directo-enlace {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: var(--r-pill);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition:
+      background-color var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out);
+  }
+
+  .agenda__directo-enlace:hover {
+    border-color: rgb(255 255 255 / 0.3);
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  .agenda__directo-icono {
+    display: grid;
+    place-items: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    flex: none;
+  }
+
+  .agenda__directo-icono :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Formulario: superficie clara apoyada sobre el panel oscuro, sin sombra
+     dura para no competir con el borde del bloque. */
+  .agenda__formulario {
+    padding: 1.5rem;
+    border-radius: var(--r-card);
+    background: #fff;
+    color: var(--ink);
+  }
+
+  .agenda__formulario h3 {
+    font-size: 1.125rem;
+  }
+
+  .agenda__form-nota {
+    margin-top: 0.25rem;
+    margin-bottom: 1.25rem;
+    color: var(--slate-600);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .agenda__campos {
+    display: grid;
+    gap: 0.875rem;
+  }
+
+  .agenda__campo {
+    display: grid;
+    gap: 0.375rem;
+  }
+
+  .agenda__campo label {
+    color: var(--slate-600);
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+
+  .agenda__opcional {
+    color: var(--slate-500);
+    font-weight: 500;
+  }
+
+  .agenda__campo input,
+  .agenda__campo select,
+  .agenda__campo textarea {
+    width: 100%;
+    padding: 0.6875rem 0.875rem;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--r-control);
+    background: var(--slate-100);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.9375rem;
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+
+  .agenda__campo textarea {
+    resize: vertical;
+    min-height: 4.5rem;
+  }
+
+  .agenda__campo select {
+    appearance: none;
+    /* La flecha nativa no se puede tintar, asi que se usa un data URI con el
+       color de la marca ya resuelto. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.25rem;
+  }
+
+  .agenda__campo input:hover,
+  .agenda__campo select:hover,
+  .agenda__campo textarea:hover {
+    border-color: var(--slate-300);
+  }
+
+  .agenda__campo input:focus,
+  .agenda__campo select:focus,
+  .agenda__campo textarea:focus {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+    border-color: transparent;
+    background: #fff;
+  }
+
+  .agenda__enviar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+    padding: 0.8125rem 1.25rem;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: var(--brand);
+    color: #fff;
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition:
+      background-color var(--dur-base) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+
+  .agenda__enviar:hover {
+    background: var(--brand-strong);
+  }
+
+  .agenda__enviar:active {
+    transform: scale(0.985);
+  }
+
+  .agenda__legal {
+    color: var(--slate-600);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  @media (min-width: 64rem) {
+    .agenda__caja {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 25rem);
+      gap: 3rem;
+      align-items: center;
+      padding: 3.5rem;
+    }
+
+    .agenda__formulario {
+      padding: 2rem;
+    }
+  }
+
+  /* Movil: la formacion era 4 campos apilados y empujaba la seccion a mas de
+     700px. Nombre y WhatsApp van en dos columnas y la nota baja a 2 lineas. */
+  @media (max-width: 39.999rem) {
+    .agenda {
+      padding-block: 2.5rem;
+    }
+
+    .agenda__caja {
+      gap: 1.5rem;
+      padding: 1.25rem;
+    }
+
+    .agenda__estado {
+      margin-bottom: 0.875rem;
+      padding: 0.3125rem 0.625rem;
+      font-size: 0.75rem;
+    }
+
+    .agenda__campos {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.625rem 0.75rem;
+    }
+
+    /* La especialidad y la nota piden ancho completo para no recortar el
+       texto del select ni dejar el textarea en 150px. */
+    .agenda__campo:nth-of-type(3),
+    .agenda__campo:nth-of-type(4),
+    .agenda__enviar,
+    .agenda__legal {
+      grid-column: 1 / -1;
+    }
+
+    .agenda__campo {
+      gap: 0.25rem;
+    }
+
+    .agenda__campo label {
+      font-size: 0.75rem;
+    }
+
+    .agenda__campo input,
+    .agenda__campo select {
+      padding: 0.5625rem 0.625rem;
+      font-size: 0.875rem;
+    }
+
+    .agenda__campo textarea {
+      padding: 0.5625rem 0.625rem;
+      font-size: 0.875rem;
+      min-height: 3.5rem;
+    }
+
+    .agenda__campo select {
+      padding-right: 1.75rem;
+    }
+
+    .agenda__enviar {
+      margin-top: 0.125rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    .agenda__legal {
+      font-size: 0.6875rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .agenda__directo-enlace,
+    .agenda__campo input,
+    .agenda__campo select,
+    .agenda__campo textarea,
+    .agenda__enviar {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const NUMERO = '50496405308';
+
+  const formulario = document.querySelector('[data-agenda-form]');
+
+  if (formulario) {
+    formulario.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+
+      const datos = new FormData(formulario);
+      const nombre = (datos.get('nombre') ?? '').toString().trim();
+      const whatsapp = (datos.get('whatsapp') ?? '').toString().trim();
+      const especialidad = (datos.get('especialidad') ?? '').toString().trim();
+      const nota = (datos.get('nota') ?? '').toString().trim();
+
+      // required ya garantiza nombre, whatsapp y especialidad, pero se
+      // comprueba igual para no abrir un chat con un mensaje a medias.
+      if (!nombre || !whatsapp || !especialidad) return;
+
+      /* Los rotulos del mensaje salen de data-attributes: el script se compila
+         una sola vez para los dos idiomas, asi que no puede cerrarse sobre el
+         diccionario. */
+      const rotulo = (clave) => formulario.getAttribute(`data-msj-${clave}`) ?? '';
+
+      const linea = (clave, valor) => `${rotulo(clave)}: ${valor}`;
+
+      const lineas = [
+        rotulo('salto'),
+        '',
+        linea('nombre', nombre),
+        `WhatsApp: ${whatsapp}`,
+        linea('especialidad', especialidad),
+        linea('sede', 'Uniplaza La Ceiba'),
+      ];
+
+      if (nota) lineas.push(linea('motivo', nota));
+
+      window.open(
+        `https://wa.me/${NUMERO}?text=${encodeURIComponent(lineas.join('\n'))}`,
+        '_blank',
+        'noopener',
+      );
+    });
+  }
+</script>

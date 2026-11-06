@@ -1,0 +1,568 @@
+---
+import Icon from './Icon.astro';
+
+interface Especialidad {
+  icon: string;
+  titulo: string;
+  desc: string;
+  destacada?: string;
+  /** Titulos largos que en la retícula de dos columnas necesitan un cuerpo
+      menor para no romper el ritmo de la tarjeta. */
+  tituloCorto?: boolean;
+}
+
+interface Props {
+  titulo: string;
+  bajada: string;
+  principales: Especialidad[];
+  /** Solo las dos primeras se usan como tarjeta; llegan fijas porque la fila de
+      abajo es de tres columnas con la ficha de diagnóstico en el centro. */
+  secundarias: Especialidad[];
+  diagnostico: { icon: string; titulo: string; desc: string };
+  infantil: { icon: string; titulo: string; desc: string; cta: { label: string; href: string } };
+  /** Franja de ancho completo. Servicios que merecen salir de la retícula,
+      como la sedación para pacientes con ansiedad. */
+  franja?: Especialidad & { cta: string };
+}
+
+const { titulo, bajada, principales, secundarias, diagnostico, infantil, franja } = Astro.props;
+---
+
+<section class="section shell esp" id="especialidades" aria-labelledby="esp-titulo">
+  <div class="esp__cabecera" data-reveal-group>
+    <h2 id="esp-titulo">{titulo}</h2>
+    <p>{bajada}</p>
+  </div>
+
+  <div class="esp__malla">
+    <div class="esp__fila" data-reveal-group>
+      {
+        principales.map((item) => (
+          <article
+            class:list={[
+              'esp__card',
+              item.destacada && 'esp__card--destacada',
+              item.tituloCorto && 'esp__card--titulo-largo',
+            ]}
+          >
+            <span class="esp__icono" aria-hidden="true">
+              <Icon name={item.icon} size={item.destacada ? 42 : 34} />
+            </span>
+            <h3 class="esp__nombre">{item.titulo}</h3>
+            {item.destacada && <p class="esp__destacado">{item.destacada}</p>}
+            <p class="esp__desc">{item.desc}</p>
+          </article>
+        ))
+      }
+    </div>
+
+    <div class="esp__fila esp__fila--abajo" data-reveal-group>
+      <article class="esp__card">
+        <span class="esp__icono" aria-hidden="true">
+          <Icon name={secundarias[0].icon} size={30} />
+        </span>
+        <h3 class="esp__nombre">{secundarias[0].titulo}</h3>
+        <p class="esp__desc">{secundarias[0].desc}</p>
+      </article>
+
+      <div class="esp__feature">
+        <div class="esp__feature-cabecera">
+          <Icon name={diagnostico.icon} size={18} />
+          <h3 class="esp__feature-titulo">{diagnostico.titulo}</h3>
+        </div>
+        <p class="esp__desc esp__desc--izq">{diagnostico.desc}</p>
+      </div>
+
+      <article class:list={['esp__card', secundarias[1].tituloCorto && 'esp__card--titulo-largo']}>
+        <span class="esp__icono" aria-hidden="true">
+          <Icon name={secundarias[1].icon} size={34} />
+        </span>
+        <h3 class="esp__nombre">{secundarias[1].titulo}</h3>
+        <p class="esp__desc">{secundarias[1].desc}</p>
+      </article>
+    </div>
+
+    {
+      franja && (
+        <aside class="esp__franja" data-reveal>
+          <span class="esp__franja-icono" aria-hidden="true">
+            <Icon name={franja.icon} size={26} />
+          </span>
+          <div class="esp__franja-texto">
+            <h3 class="esp__franja-titulo">{franja.titulo}</h3>
+            <p class="esp__desc">{franja.desc}</p>
+          </div>
+          <a class="esp__franja-cta" href="#agendar">
+            <span>{franja.cta}</span>
+            <Icon name="arrow-right-01" size={15} />
+          </a>
+        </aside>
+      )
+    }
+
+    <div class="esp__ancho">
+      <div class="esp__infantil" data-reveal>
+        <span class="esp__infantil-icono" aria-hidden="true">
+          <Icon name={infantil.icon} size={28} />
+        </span>
+        <div class="esp__infantil-texto">
+          <h3 class="esp__nombre">{infantil.titulo}</h3>
+          <p class="esp__desc esp__desc--centro">{infantil.desc}</p>
+        </div>
+        <a class="esp__enlace" href={infantil.cta.href}>
+          <span>{infantil.cta.label}</span>
+          <Icon name="arrow-right-01" size={14} />
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {/* La franja vive fuera de .esp__malla porque no es una tarjeta mas: es un
+      bloque horizontal con su propio fondo, para que se lea como un mensaje
+      propio y no como la septima especialidad de la lista. */}
+</section>
+
+<style>
+  .esp__cabecera {
+    max-width: 34rem;
+    margin-bottom: 3.5rem;
+  }
+
+  .esp__cabecera h2 {
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .esp__cabecera p {
+    margin-top: 0.75rem;
+    font-size: 0.9375rem;
+  }
+
+  .esp__malla {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    max-width: 62rem;
+    margin-inline: auto;
+  }
+
+  /* ======================================================================
+     RETICULA MOVIL
+     En vertical no apilamos las tarjetas en una sola columna: se mantiene
+     la misma retícula de escritorio en dos columnas, con la tercera
+     tarjeta de cada fila abriendo el ancho completo para que la fila no
+     quede coja.
+     ====================================================================== */
+
+  .esp__fila {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.875rem;
+  }
+
+  /* La ultima de cada trio ocupa las dos columnas y se vuelve horizontal
+     para no quedar como una caja alta con mucho vacio. */
+  .esp__fila > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 1.125rem 1.25rem;
+    text-align: left;
+  }
+
+  .esp__fila > :last-child:nth-child(odd) .esp__icono {
+    margin-bottom: 0;
+  }
+
+  /* Franja de ancho completo, entre la retícula y el bloque de odontopediatría.
+     Icono a la izquierda, texto al centro y llamada a la acción a la derecha;
+     en movil se apila. El fondo es un velo de marca suave, no sólido, para
+     seguir leyéndose como parte de la misma sección. */
+  .esp__franja {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-top: 0.875rem;
+    padding: 1.25rem;
+    border: 1px solid color-mix(in oklch, var(--brand) 18%, transparent);
+    border-radius: var(--r-card);
+    background: color-mix(in oklch, var(--brand) 6%, transparent);
+  }
+
+  .esp__franja-icono {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--r-full);
+    background: var(--brand);
+    color: #fff;
+  }
+
+  .esp__franja-titulo {
+    color: var(--ink);
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .esp__franja-texto .esp__desc {
+    max-width: 62ch;
+    margin-top: 0.25rem;
+  }
+
+  .esp__franja-cta {
+    grid-column: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    justify-self: start;
+    padding: 0.5rem 0.9375rem;
+    border-radius: var(--r-pill);
+    background: var(--brand);
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color var(--dur-base) var(--ease-out);
+  }
+
+  .esp__franja-cta:hover {
+    background: var(--brand-strong);
+  }
+
+  .esp__fila > :last-child:nth-child(odd) .esp__desc {
+    max-width: none;
+    margin-top: 0.25rem;
+  }
+
+  .esp__fila > :last-child:nth-child(odd) .esp__destacado {
+    order: -1;
+    margin-top: 0;
+    margin-right: 0.25rem;
+  }
+
+  .esp__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Arriba, no centrado: las celdas de una fila se estiran a la altura
+       de la mas alta, y centrar dejaria los iconos a distinta altura. */
+    justify-content: flex-start;
+    gap: 0.125rem;
+    padding: 1.25rem 1rem;
+    border-radius: var(--r-card);
+    background: var(--ice);
+    text-align: center;
+    transition: background-color var(--dur-base) var(--ease-out);
+  }
+
+  .esp__icono {
+    display: grid;
+    place-items: center;
+    margin-bottom: 0.375rem;
+    color: var(--slate-600);
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  .esp__icono :global(svg) {
+    stroke-width: 1.25;
+  }
+
+  .esp__nombre {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .esp__desc {
+    margin-top: 0.25rem;
+    max-width: 24ch;
+    font-size: 0.6875rem;
+    line-height: 1.45;
+    color: var(--slate-600);
+  }
+
+  .esp__desc--izq {
+    max-width: 40ch;
+    text-align: left;
+  }
+
+  .esp__desc--centro {
+    max-width: 34ch;
+    text-align: center;
+  }
+
+  /* Titulos de tres palabras en una celda de dos columnas: un cuerpo menor
+     los deja en dos lineas limpias en vez de tres o cuatro cortadas. */
+  .esp__card--titulo-largo .esp__nombre {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  /* Tarjeta elevada: cirugia maxilofacial */
+  .esp__card--destacada {
+    z-index: 1;
+    padding: 1.25rem 1rem;
+    border-radius: var(--r-panel);
+    background: var(--brand-soft);
+    box-shadow: 0 12px 30px -5px oklch(0.677 0.166 285 / 0.22);
+  }
+
+  .esp__card--destacada .esp__icono {
+    color: var(--ink);
+  }
+
+  .esp__card--destacada .esp__nombre {
+    font-size: 0.875rem;
+  }
+
+  .esp__destacado {
+    max-width: 18ch;
+    margin-top: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-wrap: balance;
+    color: var(--primary);
+  }
+
+  /* Bloque central: diagnostico 3D */
+  .esp__feature {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem;
+    border: 1px solid var(--slate-100);
+    border-radius: var(--r-card);
+    background: #fff;
+    text-align: center;
+  }
+
+  .esp__feature-cabecera {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--brand);
+  }
+
+  .esp__feature-titulo {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  /* Tarjeta ancha: odontopediatria */
+  .esp__ancho {
+    display: flex;
+    justify-content: center;
+  }
+
+  .esp__infantil {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border: 1px solid var(--slate-100);
+    border-radius: var(--r-card);
+    background: #fff;
+    text-align: center;
+    transition: border-color var(--dur-base) var(--ease-out);
+  }
+
+  .esp__infantil-icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--r-control);
+    background: var(--brand-soft);
+    color: var(--brand);
+  }
+
+  .esp__infantil-texto {
+    flex: 1 1 auto;
+  }
+
+  .esp__enlace {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.5rem;
+    padding-inline: 1rem;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--r-pill);
+    background: var(--slate-50, #f8fafc);
+    color: var(--slate-600);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* ======================================================================
+     Escritorio: las alturas escalonadas y la tarjeta elevada solo tienen
+     sentido con la retícula de tres columnas.
+     ====================================================================== */
+
+  @media (min-width: 48rem) {
+    .esp__malla {
+      gap: 1.25rem;
+    }
+
+    /* En escritorio la franja pasa a tres columnas en una sola fila y el CTA
+       queda a la derecha, alineado al centro vertical. */
+    .esp__franja {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 1rem 1.25rem;
+      margin-top: 1.25rem;
+      padding: 1.5rem 1.75rem;
+    }
+
+    .esp__franja-cta {
+      grid-column: auto;
+      justify-self: end;
+    }
+
+    .esp__fila {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: end;
+      gap: 1.25rem;
+    }
+
+    /* En escritorio cada trio vuelve a ser una fila de tres, asi que la
+       tarjeta que ocupaba el ancho completo recupera su forma de columna. */
+    .esp__fila > :last-child:nth-child(odd) {
+      grid-column: auto;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.125rem;
+      padding: 1.75rem;
+      text-align: center;
+    }
+
+    .esp__fila > :last-child:nth-child(odd) .esp__icono {
+      margin-bottom: 0.5rem;
+    }
+
+    .esp__fila > :last-child:nth-child(odd) .esp__desc {
+      max-width: 32ch;
+      margin-top: 0.375rem;
+      font-size: 0.8125rem;
+      line-height: 1.55;
+    }
+
+    .esp__fila > :last-child:nth-child(odd) .esp__destacado {
+      order: 0;
+      margin-top: 0.25rem;
+      margin-right: 0;
+    }
+
+    .esp__fila--abajo {
+      align-items: start;
+    }
+
+    .esp__desc {
+      max-width: 32ch;
+      font-size: 0.8125rem;
+      line-height: 1.55;
+    }
+
+    .esp__nombre {
+      font-size: 0.9375rem;
+    }
+
+    .esp__card--titulo-largo .esp__nombre {
+      font-size: 0.875rem;
+      line-height: 1.35;
+    }
+
+    .esp__destacado {
+      max-width: none;
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+
+    .esp__feature-titulo {
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+    }
+
+    .esp__card {
+      min-height: 13.75rem;
+      padding: 1.75rem;
+      justify-content: center;
+    }
+
+    .esp__card--destacada {
+      --esp-lift: -0.5rem;
+      --reveal-lift: -0.5rem;
+      min-height: 16.25rem;
+      padding: 2rem;
+      transform: translateY(-0.5rem);
+    }
+
+    .esp__card--destacada .esp__nombre {
+      font-size: 1rem;
+    }
+
+    .esp__feature {
+      min-height: 12.5rem;
+      padding: 1.5rem;
+      text-align: left;
+      justify-content: center;
+    }
+
+    .esp__feature-cabecera {
+      flex-direction: row;
+      gap: 0.5rem;
+    }
+
+    .esp__infantil {
+      flex-direction: row;
+      width: 66%;
+      text-align: left;
+    }
+
+    /* En escritorio el bloque arranca a la izquierda, asi que el parrafo
+       vuelve a alinearse con el resto del texto. */
+    .esp__desc--centro {
+      max-width: 40ch;
+      text-align: left;
+    }
+
+    .esp__enlace {
+      margin-left: auto;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .esp__card:hover {
+      background: var(--ice-hover);
+    }
+
+    .esp__card--destacada:hover {
+      background: oklch(0.935 0.032 278);
+    }
+
+    .esp__card:hover .esp__icono {
+      transform: scale(1.08);
+    }
+
+    .esp__infantil:hover {
+      border-color: var(--slate-200);
+    }
+
+    .esp__enlace:hover {
+      background: var(--slate-100);
+    }
+  }
+</style>

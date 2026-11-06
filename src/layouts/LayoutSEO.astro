@@ -1,0 +1,136 @@
+---
+import '@fontsource-variable/plus-jakarta-sans/wght.css';
+import '../styles/global.css';
+import { SEO } from 'astro-seo';
+import { Schema } from 'astro-seo-schema';
+import { rutaAlterna, textos } from '../i18n';
+
+export interface Props {
+  title: string;
+  description: string;
+  lang?: string;
+  canonical?: string;
+  ogImage?: string;
+  ogImageAlt?: string;
+  /** Tipo de schema.org por defecto de la pagina. */
+  schemaType?: 'LocalBusiness' | 'WebApplication' | 'Product' | 'Dentist';
+  /** Propiedades dinamicas del nodo principal de JSON-LD. */
+  schema?: Record<string, unknown>;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description,
+  lang = 'es',
+  canonical,
+  ogImage = '/og/og-default.png',
+  ogImageAlt = title,
+  schemaType = 'Dentist',
+  schema = {},
+  noindex = false,
+} = Astro.props;
+
+/* La URL canonica ya trae el prefijo /en cuando corresponde, asi que se
+   derivan las dos versiones alternas desde ella en lugar de desde
+   Astro.url.pathname, que no distingue el idioma. */
+const siteUrl = Astro.site ?? new URL('https://midominio.com');
+const canonicalUrl = canonical ?? new URL(Astro.url.pathname, siteUrl).href;
+const ogImageUrl = new URL(ogImage, siteUrl).href;
+
+const alternas = {
+  es: new URL(rutaAlterna(Astro.url.pathname, 'es'), siteUrl).href,
+  en: new URL(rutaAlterna(Astro.url.pathname, 'en'), siteUrl).href,
+};
+
+/**
+ * Grafo de datos estructurados. El nodo principal hereda el tipo pedido
+ * desde la pagina y se le inyectan las propiedades dinamicas.
+ */
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': schemaType,
+      '@id': `${siteUrl.href}#organizacion`,
+      name: 'Orthodent',
+      url: siteUrl.href,
+      ...schema,
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${siteUrl.href}#website`,
+      url: siteUrl.href,
+      name: 'Orthodent',
+      inLanguage: lang,
+      publisher: { '@id': `${siteUrl.href}#organizacion` },
+    },
+  ],
+};
+
+const t = textos(lang);
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    {/* hreflang: le dice a Google que / y /en son el mismo contenido en dos
+        idiomas y evita que se traguen como duplicados. */}
+    <link rel="alternate" hreflang="es" href={alternas.es} />
+    <link rel="alternate" hreflang="en" href={alternas.en} />
+    <link rel="alternate" hreflang="x-default" href={alternas.es} />
+
+    <SEO
+      title={title}
+      titleTemplate="%s"
+      description={description}
+      canonical={canonicalUrl}
+      charset="utf-8"
+      noindex={noindex}
+      surpressWarnings={true}
+      openGraph={{
+        basic: {
+          title,
+          type: 'website',
+          image: ogImageUrl,
+          url: canonicalUrl,
+        },
+        optional: {
+          description,
+          siteName: 'Orthodent',
+          locale: lang,
+        },
+        image: {
+          url: ogImageUrl,
+          secureUrl: ogImageUrl,
+          type: 'image/png',
+          width: 1200,
+          height: 630,
+          alt: ogImageAlt,
+        },
+      }}
+      twitter={{
+        card: 'summary_large_image',
+        title,
+        description,
+        image: ogImageUrl,
+        imageAlt: ogImageAlt,
+      }}
+    />
+    <Schema item={jsonLd} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip-link" href="#contenido">{t.salto}</a>
+    <slot />
+    <script>
+      import '../scripts/reveal.ts';
+    </script>
+  </body>
+</html>

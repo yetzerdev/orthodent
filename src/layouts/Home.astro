@@ -1,0 +1,105 @@
+---
+/**
+ * La home en ambos idiomas.
+ *
+ * El copy vive en src/i18n y los listados largos en src/i18n/listados.js.
+ * Esta pagina solo arma los props de cada componente con el idioma de la ruta:
+ * Astro ya define / para español y /en para inglés, así que no hace falta
+ * ningún parámetro ni detección en el navegador.
+ *
+ * / y /en usan este mismo archivo. Los cambios visuales se hacen una sola vez
+ * acá y aplican a los dos idiomas.
+ */
+import LayoutSEO from './LayoutSEO.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import Especialidades from '../components/Especialidades.astro';
+import Reconocimientos from '../components/Reconocimientos.astro';
+import Ortodoncia from '../components/Ortodoncia.astro';
+import Especialista from '../components/Especialista.astro';
+import CasosClinicos from '../components/CasosClinicos.astro';
+import Testimonios from '../components/Testimonios.astro';
+import Sedes from '../components/Sedes.astro';
+import Agendar from '../components/Agendar.astro';
+import Footer from '../components/Footer.astro';
+import CookieBanner from '../components/CookieBanner.astro';
+
+
+import { textos } from '../i18n';
+import { datosEspecialidades, datosOrtodoncia } from '../i18n/listados';
+
+const lang = Astro.currentLocale ?? 'es';
+const t = textos(lang);
+const esp = datosEspecialidades(lang);
+const orto = datosOrtodoncia(lang);
+---
+
+<LayoutSEO
+  title={t.meta.title}
+  description={t.meta.description}
+  lang={lang}
+  schemaType="Dentist"
+  schema={{
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'La Ceiba',
+      addressRegion: 'Cortes',
+      addressCountry: 'HN',
+    },
+    telephone: '+504 9640-5308',
+    areaServed: ['La Ceiba'],
+  }}
+>
+  <Header cta={{ label: t.nav.agendar, href: '#agendar' }} />
+
+  <main id="contenido">
+    <Hero
+      titulo={t.hero.titulo}
+      bajada={t.hero.bajada}
+      destacado={{
+        texto: t.hero.destacado,
+        etiqueta: t.hero.destacadoEtiqueta,
+      }}
+      ctas={[
+        { label: t.hero.cta1, corto: t.hero.cta1Corto, href: '#sedes', variant: 'solid' },
+        { label: t.hero.cta2, corto: t.hero.cta2Corto, href: '#agendar', variant: 'ghost', icon: 'calendar-01' },
+      ]}
+    />
+
+    <Especialidades
+      titulo={t.especialidades.titulo}
+      bajada={t.especialidades.bajada}
+      principales={esp.principales}
+      secundarias={esp.secundarias}
+      diagnostico={esp.diagnostico}
+      infantil={esp.infantil}
+      franja={esp.franja}
+    />
+
+    <Reconocimientos
+      titulo={t.reconocimiento.titulo}
+      bajada={t.reconocimiento.bajada}
+      etiquetaGrupo={t.reconocimiento.etiquetaGrupo}
+      anterior={t.reconocimiento.anterior}
+      siguiente={t.reconocimiento.siguiente}
+      destacados={t.reconocimientoItems}
+    />
+
+    {/* Va despues de Equipamiento y diferenciadores: alli se demuestra que hay
+        tecnologia, y aca se explica que se puede hacer con esa tecnologia. */}
+    <Ortodoncia sistemas={orto.sistemas} />
+
+    <Especialista />
+
+    <CasosClinicos casos={t.casosItems} />
+
+    <Testimonios />
+
+    <Sedes />
+
+    <Agendar />
+  </main>
+
+  <Footer />
+  <CookieBanner />
+</LayoutSEO>
