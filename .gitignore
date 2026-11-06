@@ -5,10 +5,11 @@ dist/
 .vercel/
 .netlify/
 
-# Entorno. El token de Mapbox NO va aqui: se declara como variable de entorno
-# en el panel del host (Netlify/Vercel/Cloudflare). Si se sube el .env al repo,
-# el build local y el del host pueden terminar con tokens distintos y el mapa
-# funciona en uno y no en el otro.
+# Entorno. El .env local es de cada maquina y no se sube.
+# .env.production SI se sube a proposito: solo contiene el token publico (pk.)
+# de Mapbox, el mismo que queda visible en el HTML. Asi el deploy automatico
+# compila con mapa sin configurar variables en el panel del host. Un valor
+# definido en el panel tiene prioridad sobre este archivo.
 .env
 .env.local
 .env.*.local

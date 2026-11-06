@@ -46,6 +46,9 @@ PUBLIC_MAPBOX_TOKEN=pk.xxxxxxxx
 - Se declara como variable de entorno **de build** en el panel del host
   (Netlify, Vercel, Cloudflare Pages). Si se agrega después de construir, no
   tiene efecto.
+- El repo incluye `.env.production` con ese token público para que el deploy
+  funcione sin configuración manual. Si el panel del host define
+  `PUBLIC_MAPBOX_TOKEN`, ese valor tiene prioridad.
 - En <https://account.mapbox.com/access-tokens/> el token debe tener el dominio
   de producción en *URL restrictions*. Si está restringido a `localhost`,
   Mapbox responde 401 en el sitio publicado.
@@ -56,10 +59,13 @@ en `.env.example`.
 
 ## Antes de publicar
 
-1. **Dominio**: cambiar `site` en `astro.config.mjs` (hoy es un placeholder).
-   De ahí salen las URL canónicas, los `hreflang` y el `sitemap-index.xml`.
-2. **Token de Mapbox**: declararlo en el host como variable de build.
-3. **Restricciones del token**: agregar el dominio de producción.
+1. **Dominio**: ya está fijado en `astro.config.mjs` como
+   `https://orthodent.hn`. De ahí salen las URL canónicas, los `hreflang` y el
+   `sitemap-index.xml`.
+2. **Token de Mapbox**: incluido en `.env.production`; opcionalmente se puede
+   sobrescribir desde el panel del host.
+3. **Restricciones del token**: agregar `orthodent.hn` (y `www.orthodent.hn`)
+   en *URL restrictions* de Mapbox.
 
 ## Estructura
 
