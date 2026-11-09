@@ -124,6 +124,13 @@ const t = textos(lang);
     <Schema item={jsonLd} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#ffffff" />
+
+    {/* Verificacion de propiedad en Google Search Console. Se define en el
+        build para no dejar el codigo escrito a mano: el valor se copia del
+        metodo "Etiqueta HTML" de Search Console. */}
+    {import.meta.env.PUBLIC_GSC_VERIFICATION && (
+      <meta name="google-site-verification" content={import.meta.env.PUBLIC_GSC_VERIFICATION} />
+    )}
     <slot name="head" />
   </head>
   <body>
@@ -131,6 +138,7 @@ const t = textos(lang);
     <slot />
     <script>
       import '../scripts/reveal.ts';
+      import '../scripts/analytics.ts';
     </script>
   </body>
 </html>

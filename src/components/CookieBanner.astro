@@ -225,6 +225,9 @@ const privacidad = lang === 'en' ? '/en/privacy' : '/privacidad';
   botonAceptar?.addEventListener('click', () => {
     guardar('aceptadas');
     cerrar();
+    /* Analytics escucha este evento para arrancar en la misma visita, sin
+       obligar a recargar la pagina. */
+    window.dispatchEvent(new CustomEvent('orthodent:cookies-aceptadas'));
   });
 
   botonRechazar?.addEventListener('click', () => {
